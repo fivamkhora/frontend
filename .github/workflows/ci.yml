@@ -23,7 +23,7 @@ jobs:
         node-version: [22.x]
     steps:
       - name: Checkout do codigo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
@@ -46,7 +46,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout do codigo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Scan vulnerabilities (fs)
         uses: aquasecurity/trivy-action@v0.36.0
@@ -69,7 +69,7 @@ jobs:
       IMAGE_NAME: fivamkhora/frontend
     steps:
       - name: Checkout do codigo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Definir tag da imagem a partir da ref
         run: echo "REF_NAME_SANITIZED=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_ENV"
