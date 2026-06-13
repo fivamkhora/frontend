@@ -13,15 +13,32 @@ function startTestServer() {
 }
 
 describe('app', () => {
-  it('returns hello world on root route', async () => {
+  it('returns construction page on root route', async () => {
     const { server, baseUrl } = await startTestServer();
 
     try {
       const response = await fetch(`${baseUrl}/`);
-      const body = await response.json();
+      const body = await response.text();
 
       assert.equal(response.status, 200);
-      assert.deepEqual(body, { message: 'Hello World' });
+      assert.match(response.headers.get('content-type'), /text\/html/);
+      assert.match(body, /Em construcao/);
+      assert.match(body, /\/styles\.css/);
+    } finally {
+      server.close();
+    }
+  });
+
+  it('serves basic stylesheet', async () => {
+    const { server, baseUrl } = await startTestServer();
+
+    try {
+      const response = await fetch(`${baseUrl}/styles.css`);
+      const body = await response.text();
+
+      assert.equal(response.status, 200);
+      assert.match(response.headers.get('content-type'), /text\/css/);
+      assert.match(body, /\.page/);
     } finally {
       server.close();
     }

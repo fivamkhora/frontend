@@ -32,7 +32,7 @@ docker run --rm -p 3000:3000 fivam-backend-fiap
 
 ## Rotas
 
-- `GET /` retorna `{ "message": "Hello World" }`
+- `GET /` retorna a pagina HTML "Em construcao"
 - `GET /health` retorna `{ "status": "ok" }`
 - `GET /request-info` retorna dados da requisicao, respeitando cabecalhos `X-Forwarded-*` de proxy/TLS offload
 

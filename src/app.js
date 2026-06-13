@@ -1,11 +1,13 @@
 const express = require('express');
+const path = require('node:path');
 
 const app = express();
 
 app.set('trust proxy', 1);
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (_req, res) => {
-  res.status(200).json({ message: 'Hello World' });
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.get('/health', (_req, res) => {
