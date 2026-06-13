@@ -66,7 +66,7 @@ jobs:
     if: github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/'))
     environment: secrets
     env:
-      IMAGE_NAME: fivamkhora/khora
+      IMAGE_NAME: fivamkhora/frontend
     steps:
       - name: Checkout do codigo
         uses: actions/checkout@v6
