@@ -32,11 +32,12 @@ export default function LoginPage() {
       const data = await mockLogin(email, password);
       console.log("Login bem-sucedido:", data);
 
-      localStorage.setItem("khora_token", (data as any).access_token);
+      localStorage.setItem("khora_token", data.access_token);
 
       router.push("/dashboard");
-    } catch (err: any) {
-      setError(err.detail || "Ocorreu um erro durante o login.");
+    } catch (err) {
+      const apiError = err as { detail?: string };
+      setError(apiError.detail || "Ocorreu um erro durante o login.");
     } finally {
       setLoading(false);
     }

@@ -31,8 +31,9 @@ export default function CadastroPage() {
         "Cadastro realizado com sucesso! Faça login para acessar sua conta.",
       );
       router.push("/login");
-    } catch (err: any) {
-      setError(err.detail || "Ocorreu um erro durante o cadastro.");
+    } catch (err) {
+      const apiError = err as { detail?: string };
+      setError(apiError.detail || "Ocorreu um erro durante o cadastro.");
     } finally {
       setIsLoading(false);
     }
