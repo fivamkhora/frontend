@@ -5,107 +5,193 @@ import { useRouter } from "next/navigation";
 import { mockRegister } from "@/services/auth";
 import Link from "next/link";
 import type { SyntheticEvent } from "react";
+import { Brain, Eye, EyeOff, FileText, Lock, ShieldCheck } from "lucide-react";
 
 export default function CadastroPage() {
-    const [name, setName] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [role, setRole] = useState("aluno");
-    const [error, setError] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
-    const router = useRouter();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [role, setRole] = useState("student");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
-    const handleRegister = async (e: SyntheticEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        setIsLoading(true);
-        setError("");
+  const handleRegister = async (e: SyntheticEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
 
-        try {
-            const data = await mockRegister(name, email, password, role);
-            console.log("Cadastro bem-sucedido:", data);
+    try {
+      const data = await mockRegister(name, email, password, role);
+      console.log("Cadastro bem-sucedido:", data);
 
-            // Redirecionar para a página de login após cadastro
-            alert("Cadastro realizado com sucesso! Faça login para acessar sua conta.");
-            router.push("/login");
-        } catch (err: any) {
-            setError(err.detail || "Ocorreu um erro durante o cadastro.");
-        } finally {
-            setIsLoading(false);
-        }
-    };
+      // Redirecionar para a página de login após cadastro
+      alert(
+        "Cadastro realizado com sucesso! Faça login para acessar sua conta.",
+      );
+      router.push("/login");
+    } catch (err: any) {
+      setError(err.detail || "Ocorreu um erro durante o cadastro.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-50 py-10">
-            <form onSubmit={handleRegister} className="bg-white p-8 rounded shadow-md w-full max-w-md border border-gray-100">
-                <h1 className="text-3xl font-bold mb-2 text-center text-slate-800">Crie sua conta no Khora</h1>
-                <p className="text-center text-gray-500 mb-6">Junte-se ao Khora e comece sua jornada</p>
-
-                {error && (
-                    <div className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-md">
-                        {error}
-                    </div>
-                )}
-
-                <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
-                    <input
-                        type="text"
-                        placeholder="Digite seu nome completo"
-                        className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        onChange={(e) => setName(e.target.value)}
-                        required
-                    />
-                </div>
-
-                <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input
-                        type="email"
-                        placeholder="seu@email.com"
-                        className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                    />
-                </div>
-
-                <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Senha</label>
-                    <input
-                        type="password"
-                        placeholder="Digite uma senha (min 6 caracteres)"
-                        className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                    />
-                </div>
-
-                <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Usuário</label>
-                    <select
-                        className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        value={role}
-                        onChange={(e) => setRole(e.target.value)}
-                    >
-                        <option value="teacher">Professor</option>
-                        <option value="student">Aluno(a)</option>
-                    </select>
-                </div>
-
-                <button
-                    type="submit"
-                    className="w-full bg-blue-600 text-white font-medium p-2.5 rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-400"
-                    disabled={isLoading}
-                >
-                    {isLoading ? "Cadastrando..." : "Cadastrar"}
-                </button>
-
-                <p className="mt-6 text-center text-sm text-gray-500 mt-4">
-                    Já tem uma conta?{' '}
-                    <Link href="/login" className="text-blue-600 hover:underline">
-                        Faça login aqui
-                    </Link>
-                </p>
-            </form>
+  return (
+    <div className="flex min-h-screen bg-[#0f172a] items-center justify-center p-4 md:p-10 font-sans">
+      <div className="flex flex-col md:flex-row w-full max-w-6xl bg-white rounded-2xl overflow-hidden shadow-2xl min-h-[80vh]">
+        <div className="w-full md:w-1/2 bg-[#1e3a8a] text-white p-8 md:p-16 flex flex-col justify-center relative overflow-hidden">
+          <div className="max-w-md z-10">
+            <span className="inline-block bg-[#8b5cf6] text-xs font-semibold px-3 py-1.5 rounded-full mb-6 tracking-wide">
+              <span className="flex items-center gap-3">
+                <Brain /> Excelência com IA
+              </span>
+            </span>
+            <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-6 leading-tight">
+              Domine qualquer assunto com a Khora.
+            </h2>
+            <p className="text-blue-200 text-base md:text-lg leading-relaxed">
+              Junte-se a milhares de professores que usam nosso copiloto
+              inteligente para gerar questionários personalizados e aplicar
+              avaliações com facilidade.
+            </p>
+          </div>
         </div>
-    );
+
+        <div className="w-full md:w-1/2 p-8 md:p-16 flex flex-col justify-between bg-[#f8fafc]">
+          <div className="w-full max-w-md mx-auto my-auto">
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold text-[#1e3a8a] mb-2 tracking-tight">
+                Khora
+              </h1>
+              <h3 className="text-2xl font-bold text-gray-900 mb-1">
+                Comece gratuitamente
+              </h3>
+              <p className="text-sm text-gray-500">
+                Crie sua conta de aluno ou professor em segundos.
+              </p>
+            </div>
+
+            {error && (
+              <div className="p-3 mb-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleRegister} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
+                  Nome Completo
+                </label>
+                <input
+                  type="text"
+                  placeholder="João Silva"
+                  className="w-full p-3 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-400 text-sm"
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
+                  Endereço de E-mail
+                </label>
+                <input
+                  type="email"
+                  placeholder="joao@exemplo.com"
+                  className="w-full p-3 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-400 text-sm"
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
+                  Senha
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    className="w-full p-3 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-400 text-sm"
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                  <div
+                    className="absolute right-3 top-3.5 text-gray-400 cursor-pointer hover:text-gray-600 select-none"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff /> : <Eye />}{" "}
+                  </div>
+                </div>
+                <p className="text-[11px] text-gray-500 mt-1">
+                  Deve ter pelo menos 6 caracteres.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
+                  Tipo de Usuário
+                </label>
+                <select
+                  className="w-full p-3 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 text-sm"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                >
+                  <option value="student">Aluno(a)</option>
+                  <option value="teacher">Professor</option>
+                </select>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-[#0a2540] text-white font-medium p-3 rounded-lg hover:bg-opacity-95 transition-all flex items-center justify-center gap-2 mt-6 shadow-md disabled:bg-gray-400"
+                disabled={isLoading}
+              >
+                <span>{isLoading ? "Cadastrando..." : "Criar Conta"}</span>
+                {!isLoading && (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                    stroke="currentColor"
+                    className="w-4 h-4"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+                    />
+                  </svg>
+                )}
+              </button>
+            </form>
+
+            <p className="mt-6 text-center text-sm text-gray-600">
+              Já tem uma conta?{" "}
+              <Link
+                href="/login"
+                className="text-[#1e3a8a] font-semibold hover:underline"
+              >
+                Entre
+              </Link>
+            </p>
+          </div>
+
+          <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+            <div className="flex justify-center gap-6 text-gray-400 mb-3">
+              <ShieldCheck />
+              <Lock />
+              <FileText />
+            </div>
+            <p className="text-[10px] text-gray-400 uppercase tracking-widest">
+              © 2026 KHORA AI EDUCAÇÃO. TODOS OS DIREITOS RESERVADOS.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
