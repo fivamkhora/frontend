@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false); // Novo estado criado aqui
   const [error, setError] = useState("");
@@ -29,7 +29,7 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const data = await mockLogin(email, password);
+      const data = await mockLogin(username, password);
       console.log("Login bem-sucedido:", data);
 
       localStorage.setItem("khora_token", data.access_token);
@@ -87,13 +87,13 @@ export default function LoginPage() {
             <form onSubmit={handleLogin} className="space-y-5">
               <div>
                 <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
-                  Endereço de E-mail
+                  Usuário
                 </label>
                 <input
-                  type="email"
+                  type="text"
                   placeholder="joao@exemplo.com"
                   className="w-full p-3 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-400 text-sm"
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => setUsername(e.target.value)}
                   required
                 />
               </div>
@@ -161,15 +161,6 @@ export default function LoginPage() {
               </button>
             </form>
 
-            <p className="mt-6 text-center text-sm text-gray-600">
-              Não tem uma conta?{" "}
-              <Link
-                href="/cadastro"
-                className="text-[#1e3a8a] font-semibold hover:underline"
-              >
-                Cadastre-se
-              </Link>
-            </p>
           </div>
 
           <div className="mt-8 pt-6 border-t border-gray-100 text-center">
