@@ -15,16 +15,16 @@ function loadAuthModule() {
     },
   }).outputText;
 
-  const module = { exports: {} };
+  const testModule = { exports: {} };
   const context = {
-    exports: module.exports,
-    module,
+    exports: testModule.exports,
+    module: testModule,
     setTimeout,
   };
 
   vm.runInNewContext(output, context, { filename: sourcePath });
 
-  return module.exports;
+  return testModule.exports;
 }
 
 test("mockLogin returns a bearer token for valid credentials", async () => {
