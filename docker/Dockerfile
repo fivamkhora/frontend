@@ -34,14 +34,15 @@ RUN apk update && apk upgrade --no-cache
 
 # Define que o ambiente é de produção
 ENV NODE_ENV=production
-ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
+ENV PORT=8080
 
 # Copia os arquivos necessários para rodar a aplicação
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
-EXPOSE 3000
+EXPOSE 8080
 
 # Inicia o servidor otimizado gerado pelo standalone
 CMD ["node", "server.js"]
