@@ -93,6 +93,22 @@ A Vercel usa o arquivo `vercel.json`:
 
 Isso faz o deploy falhar caso lint, typecheck, testes ou build falhem.
 
+### Variaveis de ambiente
+
+Configure a URL do BFF nos ambientes de preview e producao:
+
+```text
+BFF_BASE_URL=https://bff-khora.localhost
+```
+
+A pagina `/confeccao` chama a rota interna `/api/assessments`, e o Next.js encaminha a requisicao para:
+
+```text
+POST ${BFF_BASE_URL}/api/v1/assessments
+```
+
+Esse proxy server-side evita acoplar a tela diretamente ao host do BFF e segue melhor o modelo de deploy em Vercel/Node.js.
+
 ## Build Docker
 
 O Dockerfile fica em:

@@ -12,12 +12,29 @@ import {
   Sparkles,
 } from "lucide-react";
 
+type AssessmentResponse = {
+  data: {
+    id: string;
+    currentVersion: {
+      version: number;
+      assessment: {
+        title: string;
+        instructions: string;
+        questions: unknown[];
+        answerKey: unknown[];
+      };
+    };
+    versions: unknown[];
+  };
+};
+
 const materiaisBase =
   "O ciclo da água é o movimento contínuo da água em nosso planeta. Ele envolve processos como a evaporação, passagem do estado líquido para o gasoso devido ao calor do Sol, condensação, formação de nuvens, e precipitação, chuva. A água também infiltra no solo, alimentando lençóis freáticos.";
 
 export default function ConfeccaoProvasPage() {
   const [materia, setMateria] = useState("Ciências");
   const [anoEscolar, setAnoEscolar] = useState("6º ano");
+  const [tipoAvaliacao, setTipoAvaliacao] = useState("Prova");
   const [quantidadeQuestoes, setQuantidadeQuestoes] = useState(10);
   const [dificuldade, setDificuldade] = useState("Médio");
   const [material, setMaterial] = useState(materiaisBase);
@@ -26,44 +43,62 @@ export default function ConfeccaoProvasPage() {
   );
   const [loading, setLoading] = useState(false);
   const [resultado, setResultado] = useState("");
+  const [error, setError] = useState("");
 
   const resumoConfiguracao = useMemo(
-    () => `${materia} | ${anoEscolar} | ${quantidadeQuestoes} questões`,
-    [materia, anoEscolar, quantidadeQuestoes],
+    () =>
+      `${materia} | ${anoEscolar} | ${tipoAvaliacao} | ${quantidadeQuestoes} questões`,
+    [materia, anoEscolar, quantidadeQuestoes, tipoAvaliacao],
   );
 
   const gerarAvaliacao = async () => {
     setLoading(true);
     setResultado("");
+    setError("");
 
-    await new Promise((resolve) => setTimeout(resolve, 900));
+    try {
+      const response = await fetch("/api/assessments", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          subject: materia,
+          gradeLevel: anoEscolar,
+          classroomMaterial: material,
+          assessmentType: tipoAvaliacao,
+          questionCount: quantidadeQuestoes,
+          difficulty: dificuldade,
+          teacherInstructions: instrucoes,
+        }),
+      });
 
-    setResultado(`Avaliação de ${materia}
-Ano escolar: ${anoEscolar}
-Dificuldade: ${dificuldade}
-Quantidade de questões: ${quantidadeQuestoes}
+      const data = (await response.json()) as AssessmentResponse | {
+        error?: string;
+        message?: string;
+      };
 
-Contexto utilizado:
-${material}
+      if (!response.ok) {
+        throw new Error(
+          "error" in data
+            ? data.error
+            : "message" in data
+              ? data.message
+              : "Nao foi possivel gerar a avaliacao.",
+        );
+      }
 
-Instruções adicionais:
-${instrucoes || "Nenhuma instrução adicional informada."}
-
-Questões sugeridas:
-1. Explique, com suas palavras, o que é o ciclo da água.
-2. Qual é a relação entre evaporação e calor do Sol?
-3. Descreva como ocorre a condensação.
-4. O que acontece durante a precipitação?
-5. Por que a infiltração da água no solo é importante?
-
-Gabarito resumido:
-1. Movimento contínuo da água no planeta.
-2. O calor transforma a água líquida em vapor.
-3. O vapor esfria e forma nuvens.
-4. A água retorna à superfície em forma de chuva.
-5. Alimenta reservatórios subterrâneos, como lençóis freáticos.`);
-
-    setLoading(false);
+      setResultado(JSON.stringify(data, null, 2));
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Nao foi possivel gerar a avaliacao.",
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -152,6 +187,22 @@ Gabarito resumido:
                 <option>7º ano</option>
                 <option>8º ano</option>
                 <option>9º ano</option>
+              </select>
+            </label>
+
+            <label className="block">
+              <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
+                Tipo de Avaliação
+              </span>
+              <select
+                value={tipoAvaliacao}
+                onChange={(event) => setTipoAvaliacao(event.target.value)}
+                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              >
+                <option>Prova</option>
+                <option>Simulado</option>
+                <option>Lista de exercícios</option>
+                <option>Atividade avaliativa</option>
               </select>
             </label>
 
@@ -260,6 +311,12 @@ Gabarito resumido:
               )}
             </button>
           </div>
+
+          {error && (
+            <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700">
+              {error}
+            </div>
+          )}
 
           {resultado && (
             <section className="mt-6 rounded-lg border border-slate-200 bg-slate-950 p-4 text-slate-100">
