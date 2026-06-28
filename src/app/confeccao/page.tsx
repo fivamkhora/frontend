@@ -57,7 +57,7 @@ export default function ConfeccaoProvasPage() {
     setError("");
 
     try {
-      const response = await fetch("/api/assessments", {
+      const response = await fetch("/api/v1/assessments", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

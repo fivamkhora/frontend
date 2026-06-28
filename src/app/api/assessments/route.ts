@@ -14,7 +14,7 @@ type AssessmentPayload = {
 
 const bffBaseUrl =
   process.env.BFF_BASE_URL?.replace(/\/$/, "") ??
-  "https://bff-khora.localhost";
+  "https://bff-khora.onrender.com";
 
 function parseJsonSafely(text: string) {
   try {
@@ -40,6 +40,13 @@ function isAssessmentPayload(payload: unknown): payload is AssessmentPayload {
     typeof data.difficulty === "string" &&
     typeof data.teacherInstructions === "string"
   );
+}
+
+export function GET() {
+  return NextResponse.json({
+    status: "ok",
+    route: "/api/v1/assessments",
+  });
 }
 
 export async function POST(request: Request) {
