@@ -1,6 +1,7 @@
 "use client";
 
-import { LayoutDashboard, LogOut } from "lucide-react";
+import Link from "next/link";
+import { FilePlus2, LayoutDashboard, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function TemporaryDashboardPage() {
@@ -31,6 +32,14 @@ export default function TemporaryDashboardPage() {
                     O Login simulado foi um sucesso e o token de acesso foi armazenado no navegador! Esta área será totalmente integrada
                     com as funcionalidade de turmas e relatórios na próxima etapa.
                 </p>
+
+                <Link
+                    href="/confeccao"
+                    className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg bg-[#1e3a8a] p-3 font-medium text-white shadow-md transition-all hover:bg-opacity-95"
+                >
+                    <FilePlus2 size={16} />
+                    <span>Confeccionar Prova</span>
+                </Link>
 
                 <button
                     onClick={handleLogout}
