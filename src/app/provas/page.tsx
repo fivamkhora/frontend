@@ -175,7 +175,7 @@ export default function ProvasPage() {
       setError("");
 
       try {
-        const response = await fetch("/api/v1/assessments", {
+        const response = await fetch("/api/assessments", {
           method: "GET",
           headers: {
             Accept: "application/json",

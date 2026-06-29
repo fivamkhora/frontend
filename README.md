@@ -101,7 +101,7 @@ Configure a URL do BFF nos ambientes de preview e producao:
 BFF_BASE_URL=https://bff-khora.onrender.com
 ```
 
-A pagina `/confeccao` chama a rota interna `/api/v1/assessments`, e o Next.js encaminha a requisicao para:
+A pagina `/confeccao` chama a rota interna `/api/assessments`, e o Next.js encaminha a requisicao para:
 
 ```text
 POST ${BFF_BASE_URL}/api/v1/ia/assessments

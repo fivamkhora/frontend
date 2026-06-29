@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   BookOpen,
@@ -222,6 +222,20 @@ function normalizeAnswers(assessment: AssessmentData): NormalizedAnswer[] {
 }
 
 export default function ConfeccaoProvasPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-[#eef2f7] text-sm font-medium text-slate-600">
+          Carregando confecção de provas...
+        </div>
+      }
+    >
+      <ConfeccaoProvasContent />
+    </Suspense>
+  );
+}
+
+function ConfeccaoProvasContent() {
   const searchParams = useSearchParams();
   const editAssessmentId = searchParams.get("id");
   const [materia, setMateria] = useState("Ciências");
@@ -260,7 +274,7 @@ export default function ConfeccaoProvasPage() {
 
       try {
         const response = await fetch(
-          `/api/v1/assessments?assessmentId=${encodeURIComponent(
+          `/api/assessments?assessmentId=${encodeURIComponent(
             assessmentIdToLoad,
           )}`,
           {
@@ -338,7 +352,7 @@ export default function ConfeccaoProvasPage() {
 
     try {
       const response = await fetch(
-        isRevisionMode ? "/api/revisions" : "/api/v1/assessments",
+        isRevisionMode ? "/api/revisions" : "/api/assessments",
         {
           method: "POST",
           headers: {
