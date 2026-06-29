@@ -251,6 +251,7 @@ export default function ConfeccaoProvasPage() {
       return;
     }
 
+    const assessmentIdToLoad = editAssessmentId;
     let active = true;
 
     async function loadAssessment() {
@@ -260,7 +261,7 @@ export default function ConfeccaoProvasPage() {
       try {
         const response = await fetch(
           `/api/v1/assessments?assessmentId=${encodeURIComponent(
-            editAssessmentId,
+            assessmentIdToLoad,
           )}`,
           {
             method: "GET",
