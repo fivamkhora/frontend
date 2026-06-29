@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FilePlus2, LayoutDashboard, LogOut } from "lucide-react";
+import { FilePlus2, Files, LayoutDashboard, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function TemporaryDashboardPage() {
@@ -39,6 +39,14 @@ export default function TemporaryDashboardPage() {
                 >
                     <FilePlus2 size={16} />
                     <span>Confeccionar Prova</span>
+                </Link>
+
+                <Link
+                    href="/provas"
+                    className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg bg-blue-50 p-3 font-medium text-[#1e3a8a] shadow-sm transition-all hover:bg-blue-100"
+                >
+                    <Files size={16} />
+                    <span>Listar Provas</span>
                 </Link>
 
                 <button

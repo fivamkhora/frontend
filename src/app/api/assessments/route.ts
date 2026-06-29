@@ -43,12 +43,41 @@ function isAssessmentPayload(payload: unknown): payload is AssessmentPayload {
   );
 }
 
-export function GET() {
-  return NextResponse.json({
-    status: "ok",
-    route: "/api/v1/assessments",
-    upstream: `${bffBaseUrl}${assessmentsPath}`,
-  });
+export async function GET(request: Request) {
+  const { search } = new URL(request.url);
+
+  try {
+    const response = await fetch(`${bffBaseUrl}${assessmentsPath}${search}`, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+      cache: "no-store",
+    });
+
+    const responseText = await response.text();
+    const data = parseJsonSafely(responseText);
+
+    if (!response.ok) {
+      return NextResponse.json(
+        {
+          error: "Erro ao listar avaliacoes no BFF.",
+          upstreamStatus: response.status,
+          upstreamPath: assessmentsPath,
+          upstreamResponse:
+            data ?? responseText ?? "Resposta vazia retornada pelo BFF.",
+        },
+        { status: response.status === 404 ? 502 : response.status },
+      );
+    }
+
+    return NextResponse.json(data, { status: response.status });
+  } catch {
+    return NextResponse.json(
+      { error: "Nao foi possivel comunicar com o BFF." },
+      { status: 502 },
+    );
+  }
 }
 
 export async function POST(request: Request) {
