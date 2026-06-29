@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   BookOpen,
   Brain,
@@ -15,6 +16,15 @@ import {
 type AssessmentResponse = {
   data: {
     id: string;
+    originalRequest?: {
+      assessmentType?: string;
+      classroomMaterial?: string;
+      difficulty?: string;
+      gradeLevel?: string;
+      questionCount?: number;
+      subject?: string;
+      teacherInstructions?: string;
+    };
     currentVersion: {
       version: number;
       assessment: {
@@ -26,6 +36,10 @@ type AssessmentResponse = {
     };
     versions: unknown[];
   };
+};
+
+type AssessmentLookupResponse = {
+  data: AssessmentResponse["data"] | AssessmentResponse["data"][];
 };
 
 type AssessmentData = AssessmentResponse["data"]["currentVersion"]["assessment"];
@@ -208,6 +222,8 @@ function normalizeAnswers(assessment: AssessmentData): NormalizedAnswer[] {
 }
 
 export default function ConfeccaoProvasPage() {
+  const searchParams = useSearchParams();
+  const editAssessmentId = searchParams.get("id");
   const [materia, setMateria] = useState("Ciências");
   const [anoEscolar, setAnoEscolar] = useState("6º ano");
   const [tipoAvaliacao, setTipoAvaliacao] = useState("prova");
@@ -218,6 +234,7 @@ export default function ConfeccaoProvasPage() {
     "Inclua duas questões dissertativas",
   );
   const [loading, setLoading] = useState(false);
+  const [loadingAssessment, setLoadingAssessment] = useState(false);
   const [resultado, setResultado] = useState<AssessmentResponse | null>(null);
   const [error, setError] = useState("");
 
@@ -229,15 +246,98 @@ export default function ConfeccaoProvasPage() {
   const assessmentId = resultado?.data.id;
   const isRevisionMode = Boolean(assessmentId);
 
+  useEffect(() => {
+    if (!editAssessmentId) {
+      return;
+    }
+
+    let active = true;
+
+    async function loadAssessment() {
+      setLoadingAssessment(true);
+      setError("");
+
+      try {
+        const response = await fetch(
+          `/api/v1/assessments?assessmentId=${encodeURIComponent(
+            editAssessmentId,
+          )}`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
+          },
+        );
+        const data = (await response.json()) as AssessmentLookupResponse | {
+          error?: string;
+          message?: string;
+        };
+
+        if (!response.ok) {
+          throw new Error(
+            "error" in data
+              ? data.error
+              : "message" in data
+                ? data.message
+                : "Nao foi possivel carregar a avaliacao.",
+          );
+        }
+
+        const payload = data as AssessmentLookupResponse;
+        const assessment = Array.isArray(payload.data)
+          ? payload.data[0]
+          : payload.data;
+
+        if (!assessment) {
+          throw new Error("Avaliacao nao encontrada.");
+        }
+
+        if (!active) {
+          return;
+        }
+
+        const originalRequest = assessment.originalRequest;
+
+        setMateria(originalRequest?.subject || "Ciências");
+        setAnoEscolar(originalRequest?.gradeLevel || "6º ano");
+        setTipoAvaliacao(originalRequest?.assessmentType || "prova");
+        setQuantidadeQuestoes(originalRequest?.questionCount || 10);
+        setDificuldade(originalRequest?.difficulty || "medio");
+        setMaterial(originalRequest?.classroomMaterial || materiaisBase);
+        setInstrucoes("");
+        setResultado({ data: assessment });
+      } catch (err) {
+        if (!active) {
+          return;
+        }
+
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Nao foi possivel carregar a avaliacao.",
+        );
+      } finally {
+        if (active) {
+          setLoadingAssessment(false);
+        }
+      }
+    }
+
+    loadAssessment();
+
+    return () => {
+      active = false;
+    };
+  }, [editAssessmentId]);
+
   const gerarAvaliacao = async () => {
     setLoading(true);
     setError("");
 
     try {
       const response = await fetch(
-        isRevisionMode
-          ? `/api/v1/assessments/${assessmentId}/revisions`
-          : "/api/v1/assessments",
+        isRevisionMode ? "/api/revisions" : "/api/v1/assessments",
         {
           method: "POST",
           headers: {
@@ -247,6 +347,7 @@ export default function ConfeccaoProvasPage() {
           body: JSON.stringify(
             isRevisionMode
               ? {
+                  assessmentId,
                   adjustmentRequest: instrucoes,
                 }
               : {
@@ -344,6 +445,12 @@ export default function ConfeccaoProvasPage() {
       </header>
 
       <main className="mx-auto grid max-w-7xl gap-6 px-4 py-6 md:grid-cols-[380px_1fr] md:px-8 md:py-8">
+        {loadingAssessment && (
+          <div className="rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm font-medium text-blue-900 md:col-span-2">
+            Carregando avaliação para edição...
+          </div>
+        )}
+
         <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
           <div className="mb-5 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-[#1e3a8a]">

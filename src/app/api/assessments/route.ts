@@ -36,12 +36,15 @@ function isAssessmentPayload(payload: unknown): payload is AssessmentPayload {
 }
 
 export async function GET(request: Request) {
-  const { search } = new URL(request.url);
+  const { search, searchParams } = new URL(request.url);
+  const assessmentId = searchParams.get("assessmentId");
 
   return proxyBffJson({
     errorMessage: "Erro ao listar avaliacoes no BFF.",
     method: "GET",
-    path: `${IA_ASSESSMENTS_PATH}${search}`,
+    path: assessmentId
+      ? `${IA_ASSESSMENTS_PATH}?assessmentId=${encodeURIComponent(assessmentId)}`
+      : `${IA_ASSESSMENTS_PATH}${search}`,
   });
 }
 

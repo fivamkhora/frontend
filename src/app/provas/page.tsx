@@ -6,6 +6,7 @@ import {
   Brain,
   CalendarDays,
   Download,
+  Edit3,
   FileText,
   FlaskConical,
   History,
@@ -20,9 +21,13 @@ import {
 type BffAssessment = {
   id: string;
   originalRequest?: {
+    classroomMaterial?: string;
+    difficulty?: string;
+    questionCount?: number;
     subject?: string;
     gradeLevel?: string;
     assessmentType?: string;
+    teacherInstructions?: string;
   };
   currentVersion?: {
     assessment?: {
@@ -427,6 +432,14 @@ export default function ProvasPage() {
                     {assessment.createdAt}
                   </span>
                 </div>
+
+                <Link
+                  href={`/confeccao?id=${assessment.id}`}
+                  className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-[#1e3a8a] transition hover:border-blue-200 hover:bg-blue-50"
+                >
+                  <Edit3 size={16} />
+                  Editar
+                </Link>
               </article>
             ))}
 
