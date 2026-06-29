@@ -28,6 +28,28 @@ type AssessmentResponse = {
   };
 };
 
+type AssessmentData = AssessmentResponse["data"]["currentVersion"]["assessment"];
+
+type NormalizedOption = {
+  letter: string;
+  text: string;
+  selected: boolean;
+};
+
+type NormalizedQuestion = {
+  number: string;
+  statement: string;
+  options: NormalizedOption[];
+  points: string;
+  type: string;
+};
+
+type NormalizedAnswer = {
+  number: string;
+  answer: string;
+  rubric: string;
+};
+
 const assessmentTypes = [
   { label: "Prova", value: "prova" },
   { label: "Quiz", value: "quiz" },
@@ -43,6 +65,148 @@ const difficulties = [
 const materiaisBase =
   "O ciclo da água é o movimento contínuo da água em nosso planeta. Ele envolve processos como a evaporação, passagem do estado líquido para o gasoso devido ao calor do Sol, condensação, formação de nuvens, e precipitação, chuva. A água também infiltra no solo, alimentando lençóis freáticos.";
 
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object"
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function asText(value: unknown): string {
+  return typeof value === "string" || typeof value === "number"
+    ? String(value)
+    : "";
+}
+
+function getQuestionStatement(question: unknown): string {
+  const data = asRecord(question);
+
+  return (
+    asText(data.statement) ||
+    asText(data.question) ||
+    asText(data.enunciado) ||
+    asText(data.prompt) ||
+    asText(data.text) ||
+    "Questão gerada sem enunciado informado."
+  );
+}
+
+function getQuestionNumber(question: unknown, index: number): string {
+  const data = asRecord(question);
+  const number = asText(data.number);
+
+  return number || String(index + 1);
+}
+
+function normalizeAnswer(answer: unknown, index: number): NormalizedAnswer {
+  if (typeof answer === "string" || typeof answer === "number") {
+    return {
+      number: String(index + 1).padStart(2, "0"),
+      answer: String(answer),
+      rubric: "",
+    };
+  }
+
+  const data = asRecord(answer);
+  const number = asText(data.number) || String(index + 1);
+
+  return {
+    number: number.padStart(2, "0"),
+    answer:
+      asText(data.answer) ||
+      asText(data.correctAnswer) ||
+      asText(data.correctOption) ||
+      asText(data.option) ||
+      asText(data.letter) ||
+      "Resposta nao informada.",
+    rubric: asText(data.rubric) || asText(data.explanation),
+  };
+}
+
+function getAnswerForQuestion(
+  answerKey: unknown[],
+  questionNumber: string,
+  index: number,
+): string {
+  const answer =
+    answerKey.find((item) => {
+      const itemNumber = asText(asRecord(item).number);
+
+      return itemNumber && itemNumber === String(Number(questionNumber));
+    }) ?? answerKey[index];
+
+  if (typeof answer === "string" || typeof answer === "number") {
+    return String(answer).trim().toLowerCase();
+  }
+
+  const data = asRecord(answer);
+
+  return (
+    asText(data.answer) ||
+    asText(data.correctAnswer) ||
+    asText(data.correctOption) ||
+    asText(data.option) ||
+    asText(data.letter)
+  )
+    .trim()
+    .toLowerCase();
+}
+
+function normalizeOptions(question: unknown, selectedAnswer: string) {
+  const data = asRecord(question);
+  const rawOptions = data.options ?? data.alternatives ?? data.choices;
+
+  if (!Array.isArray(rawOptions)) {
+    return [];
+  }
+
+  return rawOptions.map((option, index) => {
+    const optionData = asRecord(option);
+    const letter =
+      asText(optionData.letter) ||
+      asText(optionData.label) ||
+      asText(optionData.key) ||
+      String.fromCharCode(65 + index);
+    const text =
+      asText(option) ||
+      asText(optionData.text) ||
+      asText(optionData.label) ||
+      asText(optionData.content) ||
+      asText(optionData.option);
+    const normalizedLetter = letter.trim().toLowerCase();
+    const normalizedText = text.trim().toLowerCase();
+
+    return {
+      letter,
+      text,
+      selected:
+        Boolean(selectedAnswer) &&
+        (selectedAnswer === normalizedLetter || selectedAnswer === normalizedText),
+    };
+  });
+}
+
+function normalizeQuestions(assessment: AssessmentData): NormalizedQuestion[] {
+  return assessment.questions.map((question, index) => {
+    const data = asRecord(question);
+    const number = getQuestionNumber(question, index);
+
+    return {
+      number: number.padStart(2, "0"),
+      statement: getQuestionStatement(question),
+      options: normalizeOptions(
+        question,
+        getAnswerForQuestion(assessment.answerKey, number, index),
+      ),
+      points: asText(data.points),
+      type: asText(data.type),
+    };
+  });
+}
+
+function normalizeAnswers(assessment: AssessmentData): NormalizedAnswer[] {
+  return assessment.answerKey.map(normalizeAnswer);
+}
+
 export default function ConfeccaoProvasPage() {
   const [materia, setMateria] = useState("Ciências");
   const [anoEscolar, setAnoEscolar] = useState("6º ano");
@@ -54,7 +218,7 @@ export default function ConfeccaoProvasPage() {
     "Inclua duas questões dissertativas",
   );
   const [loading, setLoading] = useState(false);
-  const [resultado, setResultado] = useState("");
+  const [resultado, setResultado] = useState<AssessmentResponse | null>(null);
   const [error, setError] = useState("");
 
   const resumoConfiguracao = useMemo(
@@ -65,7 +229,7 @@ export default function ConfeccaoProvasPage() {
 
   const gerarAvaliacao = async () => {
     setLoading(true);
-    setResultado("");
+    setResultado(null);
     setError("");
 
     try {
@@ -110,7 +274,7 @@ export default function ConfeccaoProvasPage() {
         );
       }
 
-      setResultado(JSON.stringify(data, null, 2));
+      setResultado(data as AssessmentResponse);
     } catch (err) {
       setError(
         err instanceof Error
@@ -343,15 +507,157 @@ export default function ConfeccaoProvasPage() {
           )}
 
           {resultado && (
-            <section className="mt-6 rounded-lg border border-slate-200 bg-slate-950 p-4 text-slate-100">
-              <h3 className="mb-3 text-base font-bold">Avaliação Gerada</h3>
-              <pre className="max-h-[520px] overflow-auto whitespace-pre-wrap text-sm leading-6 text-slate-100">
-                {resultado}
-              </pre>
-            </section>
+            <AssessmentPreview
+              assessment={resultado.data.currentVersion.assessment}
+            />
           )}
         </section>
       </main>
+    </div>
+  );
+}
+
+function AssessmentPreview({ assessment }: { assessment: AssessmentData }) {
+  const [activeTab, setActiveTab] = useState<"questions" | "answers">(
+    "questions",
+  );
+  const questions = normalizeQuestions(assessment);
+  const answers = normalizeAnswers(assessment);
+
+  return (
+    <section className="mt-6 rounded-lg border border-slate-200 bg-slate-100 p-3 md:p-5">
+      <div className="mx-auto max-w-3xl rounded-md border border-slate-300 bg-white p-5 text-slate-950 shadow-sm md:p-8">
+        <div className="mb-6 flex flex-col gap-4 border-b border-slate-300 pb-5 sm:flex-row sm:items-end sm:justify-between">
+          <div className="flex min-w-0 flex-1 items-end gap-2">
+            <strong className="text-sm">Nome:</strong>
+            <span className="h-6 flex-1 border-b border-slate-400" />
+          </div>
+
+          <div className="flex items-end gap-2">
+            <strong className="text-sm">Data:</strong>
+            <span className="text-sm text-slate-700">___/___/___</span>
+          </div>
+        </div>
+
+        <h3 className="mb-3 text-center text-xl font-bold">
+          {assessment.title}
+        </h3>
+
+        <section className="mb-6 rounded-md border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-800">
+          {assessment.instructions ||
+            "Leia com atenção cada questão antes de responder. Utilize caneta azul ou preta."}
+        </section>
+
+        <div className="mb-6 flex rounded-lg border border-slate-200 bg-slate-100 p-1">
+          <button
+            type="button"
+            onClick={() => setActiveTab("questions")}
+            className={`flex-1 rounded-md px-4 py-2 text-sm font-semibold transition ${
+              activeTab === "questions"
+                ? "bg-white text-[#1e3a8a] shadow-sm"
+                : "text-slate-600 hover:text-slate-950"
+            }`}
+          >
+            Questões
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("answers")}
+            className={`flex-1 rounded-md px-4 py-2 text-sm font-semibold transition ${
+              activeTab === "answers"
+                ? "bg-white text-[#1e3a8a] shadow-sm"
+                : "text-slate-600 hover:text-slate-950"
+            }`}
+          >
+            Respostas
+          </button>
+        </div>
+
+        {activeTab === "questions" ? (
+          <QuestionsView questions={questions} />
+        ) : (
+          <AnswersView answers={answers} />
+        )}
+      </div>
+    </section>
+  );
+}
+
+function QuestionsView({ questions }: { questions: NormalizedQuestion[] }) {
+  return (
+    <div className="space-y-5">
+      {questions.map((question) => (
+        <section
+          key={question.number}
+          className="rounded-md border border-slate-200 bg-white p-4"
+        >
+          <div className="mb-4 grid grid-cols-[44px_1fr] gap-3">
+            <div className="font-bold text-[#1e3a8a]">{question.number}.</div>
+            <div>
+              <div className="text-sm font-medium leading-6 text-slate-900">
+                {question.statement}
+              </div>
+              {(question.type || question.points) && (
+                <div className="mt-1 text-xs font-medium uppercase tracking-wide text-slate-500">
+                  {[question.type, question.points && `${question.points} ponto(s)`]
+                    .filter(Boolean)
+                    .join(" | ")}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {question.options.length > 0 ? (
+            <div className="ml-0 grid gap-2 sm:ml-14">
+              {question.options.map((option) => (
+                <div
+                  key={`${question.number}-${option.letter}`}
+                  className="flex items-center gap-3 rounded-md border border-slate-200 bg-white p-3 text-sm"
+                >
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-300 text-xs font-bold text-slate-700">
+                    {option.letter}
+                  </span>
+                  <span>{option.text}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="ml-0 space-y-4 pt-1 sm:ml-14">
+              <div className="border-b border-slate-300 pt-6" />
+              <div className="border-b border-slate-300 pt-6" />
+              <div className="border-b border-slate-300 pt-6" />
+            </div>
+          )}
+        </section>
+      ))}
+    </div>
+  );
+}
+
+function AnswersView({ answers }: { answers: NormalizedAnswer[] }) {
+  return (
+    <div className="space-y-4">
+      {answers.map((answer) => (
+        <section
+          key={answer.number}
+          className="rounded-md border border-slate-200 bg-slate-50 p-4"
+        >
+          <div className="mb-2 flex items-center gap-3">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1e3a8a] text-sm font-bold text-white">
+              {answer.number}
+            </span>
+            <div className="text-sm font-bold text-slate-950">
+              Resposta: {answer.answer}
+            </div>
+          </div>
+
+          {answer.rubric && (
+            <p className="text-sm leading-6 text-slate-700">
+              <strong>Critério:</strong> {answer.rubric}
+            </p>
+          )}
+        </section>
+      ))}
     </div>
   );
 }
