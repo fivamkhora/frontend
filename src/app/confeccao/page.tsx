@@ -28,15 +28,27 @@ type AssessmentResponse = {
   };
 };
 
+const assessmentTypes = [
+  { label: "Prova", value: "prova" },
+  { label: "Quiz", value: "quiz" },
+  { label: "Trabalho", value: "trabalho" },
+] as const;
+
+const difficulties = [
+  { label: "Fácil", value: "facil" },
+  { label: "Médio", value: "medio" },
+  { label: "Difícil", value: "dificil" },
+] as const;
+
 const materiaisBase =
   "O ciclo da água é o movimento contínuo da água em nosso planeta. Ele envolve processos como a evaporação, passagem do estado líquido para o gasoso devido ao calor do Sol, condensação, formação de nuvens, e precipitação, chuva. A água também infiltra no solo, alimentando lençóis freáticos.";
 
 export default function ConfeccaoProvasPage() {
   const [materia, setMateria] = useState("Ciências");
   const [anoEscolar, setAnoEscolar] = useState("6º ano");
-  const [tipoAvaliacao, setTipoAvaliacao] = useState("Prova");
+  const [tipoAvaliacao, setTipoAvaliacao] = useState("prova");
   const [quantidadeQuestoes, setQuantidadeQuestoes] = useState(10);
-  const [dificuldade, setDificuldade] = useState("Médio");
+  const [dificuldade, setDificuldade] = useState("medio");
   const [material, setMaterial] = useState(materiaisBase);
   const [instrucoes, setInstrucoes] = useState(
     "Inclua duas questões dissertativas",
@@ -77,12 +89,21 @@ export default function ConfeccaoProvasPage() {
       const data = (await response.json()) as AssessmentResponse | {
         error?: string;
         message?: string;
+        upstreamStatus?: number;
+        upstreamPath?: string;
       };
 
       if (!response.ok) {
+        const upstreamDetail =
+          "upstreamStatus" in data && data.upstreamStatus
+            ? ` BFF respondeu ${data.upstreamStatus}${
+                data.upstreamPath ? ` em ${data.upstreamPath}` : ""
+              }.`
+            : "";
+
         throw new Error(
           "error" in data
-            ? data.error
+            ? `${data.error}${upstreamDetail}`
             : "message" in data
               ? data.message
               : "Nao foi possivel gerar a avaliacao.",
@@ -199,10 +220,11 @@ export default function ConfeccaoProvasPage() {
                 onChange={(event) => setTipoAvaliacao(event.target.value)}
                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               >
-                <option>Prova</option>
-                <option>Simulado</option>
-                <option>Lista de exercícios</option>
-                <option>Atividade avaliativa</option>
+                {assessmentTypes.map((type) => (
+                  <option key={type.value} value={type.value}>
+                    {type.label}
+                  </option>
+                ))}
               </select>
             </label>
 
@@ -232,9 +254,11 @@ export default function ConfeccaoProvasPage() {
                   onChange={(event) => setDificuldade(event.target.value)}
                   className="w-full rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 >
-                  <option>Fácil</option>
-                  <option>Médio</option>
-                  <option>Difícil</option>
+                  {difficulties.map((difficulty) => (
+                    <option key={difficulty.value} value={difficulty.value}>
+                      {difficulty.label}
+                    </option>
+                  ))}
                 </select>
               </label>
             </div>

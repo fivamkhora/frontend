@@ -15,6 +15,7 @@ type AssessmentPayload = {
 const bffBaseUrl =
   process.env.BFF_BASE_URL?.replace(/\/$/, "") ??
   "https://bff-khora.onrender.com";
+const assessmentsPath = "/api/v1/ia/assessments";
 
 function parseJsonSafely(text: string) {
   try {
@@ -46,6 +47,7 @@ export function GET() {
   return NextResponse.json({
     status: "ok",
     route: "/api/v1/assessments",
+    upstream: `${bffBaseUrl}${assessmentsPath}`,
   });
 }
 
@@ -83,7 +85,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const response = await fetch(`${bffBaseUrl}/api/v1/assessments`, {
+    const response = await fetch(`${bffBaseUrl}${assessmentsPath}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -98,10 +100,17 @@ export async function POST(request: Request) {
 
     if (!response.ok) {
       return NextResponse.json(
-        data ?? {
-          error: responseText || "Erro ao criar avaliacao no BFF.",
+        {
+          error:
+            response.status === 404
+              ? "O BFF nao encontrou o endpoint de criacao de avaliacao."
+              : "Erro ao criar avaliacao no BFF.",
+          upstreamStatus: response.status,
+          upstreamPath: assessmentsPath,
+          upstreamResponse:
+            data ?? responseText ?? "Resposta vazia retornada pelo BFF.",
         },
-        { status: response.status },
+        { status: response.status === 404 ? 502 : response.status },
       );
     }
 

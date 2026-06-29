@@ -104,10 +104,17 @@ BFF_BASE_URL=https://bff-khora.onrender.com
 A pagina `/confeccao` chama a rota interna `/api/v1/assessments`, e o Next.js encaminha a requisicao para:
 
 ```text
-POST ${BFF_BASE_URL}/api/v1/assessments
+POST ${BFF_BASE_URL}/api/v1/ia/assessments
 ```
 
 Esse proxy server-side evita acoplar a tela diretamente ao host do BFF e segue melhor o modelo de deploy em Vercel/Node.js.
+
+Valores enviados para o BFF:
+
+```text
+assessmentType: prova | quiz | trabalho
+difficulty: facil | medio | dificil
+```
 
 ## Build Docker
 
