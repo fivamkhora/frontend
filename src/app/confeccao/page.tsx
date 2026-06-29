@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   BookOpen,
   Brain,
@@ -10,6 +10,7 @@ import {
   FileText,
   LoaderCircle,
   Menu,
+  RotateCcw,
   Sparkles,
 } from "lucide-react";
 
@@ -236,6 +237,7 @@ export default function ConfeccaoProvasPage() {
 }
 
 function ConfeccaoProvasContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const editAssessmentId = searchParams.get("id");
   const [materia, setMateria] = useState("Ciências");
@@ -259,6 +261,21 @@ function ConfeccaoProvasContent() {
   );
   const assessmentId = resultado?.data.id;
   const isRevisionMode = Boolean(assessmentId);
+
+  const reiniciarConfeccao = () => {
+    setMateria("Ciências");
+    setAnoEscolar("6º ano");
+    setTipoAvaliacao("prova");
+    setQuantidadeQuestoes(10);
+    setDificuldade("medio");
+    setMaterial(materiaisBase);
+    setInstrucoes("Inclua duas questões dissertativas");
+    setResultado(null);
+    setError("");
+    setLoading(false);
+    setLoadingAssessment(false);
+    router.replace("/confeccao", { scroll: false });
+  };
 
   useEffect(() => {
     if (!editAssessmentId) {
@@ -573,6 +590,18 @@ function ConfeccaoProvasContent() {
               Khora.
             </p>
           </div>
+
+          {isRevisionMode && (
+            <button
+              type="button"
+              onClick={reiniciarConfeccao}
+              disabled={loading || loadingAssessment}
+              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-[#1e3a8a] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+            >
+              <RotateCcw size={17} />
+              Reiniciar confecção
+            </button>
+          )}
         </section>
 
         <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
