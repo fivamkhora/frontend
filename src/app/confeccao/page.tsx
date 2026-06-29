@@ -226,29 +226,41 @@ export default function ConfeccaoProvasPage() {
       `${materia} | ${anoEscolar} | ${tipoAvaliacao} | ${quantidadeQuestoes} questões`,
     [materia, anoEscolar, quantidadeQuestoes, tipoAvaliacao],
   );
+  const assessmentId = resultado?.data.id;
+  const isRevisionMode = Boolean(assessmentId);
 
   const gerarAvaliacao = async () => {
     setLoading(true);
-    setResultado(null);
     setError("");
 
     try {
-      const response = await fetch("/api/v1/assessments", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
+      const response = await fetch(
+        isRevisionMode
+          ? `/api/v1/assessments/${assessmentId}/revisions`
+          : "/api/v1/assessments",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify(
+            isRevisionMode
+              ? {
+                  adjustmentRequest: instrucoes,
+                }
+              : {
+                  subject: materia,
+                  gradeLevel: anoEscolar,
+                  classroomMaterial: material,
+                  assessmentType: tipoAvaliacao,
+                  questionCount: quantidadeQuestoes,
+                  difficulty: dificuldade,
+                  teacherInstructions: instrucoes,
+                },
+          ),
         },
-        body: JSON.stringify({
-          subject: materia,
-          gradeLevel: anoEscolar,
-          classroomMaterial: material,
-          assessmentType: tipoAvaliacao,
-          questionCount: quantidadeQuestoes,
-          difficulty: dificuldade,
-          teacherInstructions: instrucoes,
-        }),
-      });
+      );
 
       const data = (await response.json()) as AssessmentResponse | {
         error?: string;
@@ -275,6 +287,7 @@ export default function ConfeccaoProvasPage() {
       }
 
       setResultado(data as AssessmentResponse);
+      setInstrucoes("");
     } catch (err) {
       setError(
         err instanceof Error
@@ -447,36 +460,45 @@ export default function ConfeccaoProvasPage() {
             </div>
             <div>
               <h2 className="text-xl font-bold text-slate-950">
-                Material e Contexto
+                {isRevisionMode ? "Ajustes da Avaliação" : "Material e Contexto"}
               </h2>
-              <p className="text-sm text-slate-500">
-                Base de conteúdo usada para gerar a prova.
-              </p>
+              {!isRevisionMode && (
+                <p className="text-sm text-slate-500">
+                  Base de conteúdo usada para gerar a prova.
+                </p>
+              )}
             </div>
           </div>
 
           <div className="space-y-4">
-            <label className="block">
-              <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
-                Material de Aula Conteúdo
-              </span>
-              <textarea
-                rows={8}
-                value={material}
-                onChange={(event) => setMaterial(event.target.value)}
-                className="min-h-48 w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm leading-6 text-slate-900 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-              />
-            </label>
+            {!isRevisionMode && (
+              <label className="block">
+                <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
+                  Material de Aula Conteúdo
+                </span>
+                <textarea
+                  rows={8}
+                  value={material}
+                  onChange={(event) => setMaterial(event.target.value)}
+                  className="min-h-48 w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm leading-6 text-slate-900 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                />
+              </label>
+            )}
 
             <label className="block">
               <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
                 Instruções Adicionais
               </span>
-              <input
-                type="text"
+              <textarea
+                rows={isRevisionMode ? 6 : 3}
                 value={instrucoes}
                 onChange={(event) => setInstrucoes(event.target.value)}
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                placeholder={
+                  isRevisionMode
+                    ? "Ex.: Troque a questão 2 aberta por uma questão de múltipla escolha."
+                    : "Inclua orientações para a geração da avaliação."
+                }
+                className="min-h-24 w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm leading-6 text-slate-900 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
             </label>
 
@@ -489,12 +511,14 @@ export default function ConfeccaoProvasPage() {
               {loading ? (
                 <>
                   <LoaderCircle className="animate-spin" size={18} />
-                  Gerando avaliação...
+                  {isRevisionMode ? "Revisando avaliação..." : "Gerando avaliação..."}
                 </>
               ) : (
                 <>
                   <FileText size={18} />
-                  Gerar Avaliação com IA
+                  {isRevisionMode
+                    ? "Gerar Revisão com IA"
+                    : "Gerar Avaliação com IA"}
                 </>
               )}
             </button>

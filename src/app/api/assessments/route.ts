@@ -1,4 +1,9 @@
-import { NextResponse } from "next/server";
+import {
+  IA_ASSESSMENTS_PATH,
+  jsonError,
+  proxyBffJson,
+  readJsonPayload,
+} from "../_lib/bff";
 
 export const runtime = "nodejs";
 
@@ -11,19 +16,6 @@ type AssessmentPayload = {
   difficulty: string;
   teacherInstructions: string;
 };
-
-const bffBaseUrl =
-  process.env.BFF_BASE_URL?.replace(/\/$/, "") ??
-  "https://bff-khora.onrender.com";
-const assessmentsPath = "/api/v1/ia/assessments";
-
-function parseJsonSafely(text: string) {
-  try {
-    return text ? JSON.parse(text) : null;
-  } catch {
-    return null;
-  }
-}
 
 function isAssessmentPayload(payload: unknown): payload is AssessmentPayload {
   if (!payload || typeof payload !== "object") {
@@ -46,57 +38,22 @@ function isAssessmentPayload(payload: unknown): payload is AssessmentPayload {
 export async function GET(request: Request) {
   const { search } = new URL(request.url);
 
-  try {
-    const response = await fetch(`${bffBaseUrl}${assessmentsPath}${search}`, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-      },
-      cache: "no-store",
-    });
-
-    const responseText = await response.text();
-    const data = parseJsonSafely(responseText);
-
-    if (!response.ok) {
-      return NextResponse.json(
-        {
-          error: "Erro ao listar avaliacoes no BFF.",
-          upstreamStatus: response.status,
-          upstreamPath: assessmentsPath,
-          upstreamResponse:
-            data ?? responseText ?? "Resposta vazia retornada pelo BFF.",
-        },
-        { status: response.status === 404 ? 502 : response.status },
-      );
-    }
-
-    return NextResponse.json(data, { status: response.status });
-  } catch {
-    return NextResponse.json(
-      { error: "Nao foi possivel comunicar com o BFF." },
-      { status: 502 },
-    );
-  }
+  return proxyBffJson({
+    errorMessage: "Erro ao listar avaliacoes no BFF.",
+    method: "GET",
+    path: `${IA_ASSESSMENTS_PATH}${search}`,
+  });
 }
 
 export async function POST(request: Request) {
-  let payload: unknown;
+  const payload = await readJsonPayload(request);
 
-  try {
-    payload = await request.json();
-  } catch {
-    return NextResponse.json(
-      { error: "Payload JSON invalido." },
-      { status: 400 },
-    );
+  if (!payload) {
+    return jsonError("Payload JSON invalido.", 400);
   }
 
   if (!isAssessmentPayload(payload)) {
-    return NextResponse.json(
-      { error: "Payload da avaliacao invalido." },
-      { status: 400 },
-    );
+    return jsonError("Payload da avaliacao invalido.", 400);
   }
 
   if (
@@ -107,47 +64,13 @@ export async function POST(request: Request) {
     !Number.isFinite(payload.questionCount) ||
     payload.questionCount < 1
   ) {
-    return NextResponse.json(
-      { error: "Preencha os campos obrigatorios da avaliacao." },
-      { status: 400 },
-    );
+    return jsonError("Preencha os campos obrigatorios da avaliacao.", 400);
   }
 
-  try {
-    const response = await fetch(`${bffBaseUrl}${assessmentsPath}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify(payload),
-      cache: "no-store",
-    });
-
-    const responseText = await response.text();
-    const data = parseJsonSafely(responseText);
-
-    if (!response.ok) {
-      return NextResponse.json(
-        {
-          error:
-            response.status === 404
-              ? "O BFF nao encontrou o endpoint de criacao de avaliacao."
-              : "Erro ao criar avaliacao no BFF.",
-          upstreamStatus: response.status,
-          upstreamPath: assessmentsPath,
-          upstreamResponse:
-            data ?? responseText ?? "Resposta vazia retornada pelo BFF.",
-        },
-        { status: response.status === 404 ? 502 : response.status },
-      );
-    }
-
-    return NextResponse.json(data, { status: response.status });
-  } catch {
-    return NextResponse.json(
-      { error: "Nao foi possivel comunicar com o BFF." },
-      { status: 502 },
-    );
-  }
+  return proxyBffJson({
+    body: payload,
+    errorMessage: "Erro ao criar avaliacao no BFF.",
+    method: "POST",
+    path: IA_ASSESSMENTS_PATH,
+  });
 }
