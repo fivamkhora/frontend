@@ -431,7 +431,71 @@ function ConfeccaoProvasContent() {
       setLoading(false);
     }
   };
+function AssessmentPreview({ assessment }: { assessment: AssessmentData }) {
+  const [activeTab, setActiveTab] = useState<"questions" | "answers">(
+    "questions",
+  );
+  const questions = normalizeQuestions(assessment);
+  const answers = normalizeAnswers(assessment);
 
+  return (
+    <section className="mt-6 rounded-lg border border-slate-200 bg-slate-100 p-3 md:p-5">
+      <div className="mx-auto max-w-3xl rounded-md border border-slate-300 bg-white p-5 text-slate-950 shadow-sm md:p-8">
+        <div className="mb-6 flex flex-col gap-4 border-b border-slate-300 pb-5 sm:flex-row sm:items-end sm:justify-between">
+          <div className="flex min-w-0 flex-1 items-end gap-2">
+            <strong className="text-sm">Nome:</strong>
+            <span className="h-6 flex-1 border-b border-slate-400" />
+          </div>
+
+          <div className="flex items-end gap-2">
+            <strong className="text-sm">Data:</strong>
+            <span className="text-sm text-slate-700">___/___/___</span>
+          </div>
+        </div>
+
+        <h3 className="mb-3 text-center text-xl font-bold">
+          {assessment.title}
+        </h3>
+
+        <section className="mb-6 rounded-md border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-800">
+          {assessment.instructions ||
+            "Leia com atenção cada questão antes de responder. Utilize caneta azul ou preta."}
+        </section>
+
+        <div className="mb-6 flex rounded-lg border border-slate-200 bg-slate-100 p-1">
+          <button
+            type="button"
+            onClick={() => setActiveTab("questions")}
+            className={`flex-1 rounded-md px-4 py-2 text-sm font-semibold transition ${
+              activeTab === "questions"
+                ? "bg-white text-[#1e3a8a] shadow-sm"
+                : "text-slate-600 hover:text-slate-950"
+            }`}
+          >
+            Questões
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("answers")}
+            className={`flex-1 rounded-md px-4 py-2 text-sm font-semibold transition ${
+              activeTab === "answers"
+                ? "bg-white text-[#1e3a8a] shadow-sm"
+                : "text-slate-600 hover:text-slate-950"
+            }`}
+          >
+            Respostas
+          </button>
+        </div>
+
+        {activeTab === "questions" ? (
+          <QuestionsView questions={questions} />
+        ) : (
+          <AnswersView answers={answers} />
+        )}
+      </div>
+    </section>
+  );
+}
   return (
     <div className="min-h-screen bg-[#eef2f7] text-slate-900">
       <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
@@ -692,71 +756,7 @@ function ConfeccaoProvasContent() {
   );
 }
 
-function AssessmentPreview({ assessment }: { assessment: AssessmentData }) {
-  const [activeTab, setActiveTab] = useState<"questions" | "answers">(
-    "questions",
-  );
-  const questions = normalizeQuestions(assessment);
-  const answers = normalizeAnswers(assessment);
 
-  return (
-    <section className="mt-6 rounded-lg border border-slate-200 bg-slate-100 p-3 md:p-5">
-      <div className="mx-auto max-w-3xl rounded-md border border-slate-300 bg-white p-5 text-slate-950 shadow-sm md:p-8">
-        <div className="mb-6 flex flex-col gap-4 border-b border-slate-300 pb-5 sm:flex-row sm:items-end sm:justify-between">
-          <div className="flex min-w-0 flex-1 items-end gap-2">
-            <strong className="text-sm">Nome:</strong>
-            <span className="h-6 flex-1 border-b border-slate-400" />
-          </div>
-
-          <div className="flex items-end gap-2">
-            <strong className="text-sm">Data:</strong>
-            <span className="text-sm text-slate-700">___/___/___</span>
-          </div>
-        </div>
-
-        <h3 className="mb-3 text-center text-xl font-bold">
-          {assessment.title}
-        </h3>
-
-        <section className="mb-6 rounded-md border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-800">
-          {assessment.instructions ||
-            "Leia com atenção cada questão antes de responder. Utilize caneta azul ou preta."}
-        </section>
-
-        <div className="mb-6 flex rounded-lg border border-slate-200 bg-slate-100 p-1">
-          <button
-            type="button"
-            onClick={() => setActiveTab("questions")}
-            className={`flex-1 rounded-md px-4 py-2 text-sm font-semibold transition ${
-              activeTab === "questions"
-                ? "bg-white text-[#1e3a8a] shadow-sm"
-                : "text-slate-600 hover:text-slate-950"
-            }`}
-          >
-            Questões
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("answers")}
-            className={`flex-1 rounded-md px-4 py-2 text-sm font-semibold transition ${
-              activeTab === "answers"
-                ? "bg-white text-[#1e3a8a] shadow-sm"
-                : "text-slate-600 hover:text-slate-950"
-            }`}
-          >
-            Respostas
-          </button>
-        </div>
-
-        {activeTab === "questions" ? (
-          <QuestionsView questions={questions} />
-        ) : (
-          <AnswersView answers={answers} />
-        )}
-      </div>
-    </section>
-  );
-}
 
 function QuestionsView({ questions }: { questions: NormalizedQuestion[] }) {
   return (
