@@ -12,6 +12,8 @@
     "test:vercel": "npm run lint && npm run typecheck && npm test && npm run build"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.101.2",
+    "clsx": "^2.1.1",
     "lucide-react": "^1.18.0",
     "next": "15.5.19",
     "react": "19.1.0",
@@ -20,11 +22,14 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@tanstack/react-query-devtools": "^5.101.2",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.5.19",
+    "prettier": "^3.9.4",
+    "prettier-plugin-tailwindcss": "^0.8.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

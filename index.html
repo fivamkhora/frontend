@@ -1,0 +1,649 @@
+<!doctype html>
+
+<html class="light" lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Khora | Crie provas e atividades com IA</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Public+Sans:wght@600;700&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container": "#e5eeff",
+              "inverse-primary": "#b4c5ff",
+              "inverse-surface": "#213145",
+              "on-tertiary-fixed-variant": "#7d2d00",
+              "on-primary-fixed": "#00174b",
+              "on-tertiary": "#ffffff",
+              "surface-container-high": "#dce9ff",
+              "on-primary-container": "#eeefff",
+              "inverse-on-surface": "#eaf1ff",
+              "secondary-fixed": "#62fae3",
+              "on-surface": "#0b1c30",
+              background: "#f8f9ff",
+              "on-secondary": "#ffffff",
+              surface: "#f8f9ff",
+              "secondary-container": "#62fae3",
+              "primary-fixed-dim": "#b4c5ff",
+              "on-secondary-fixed-variant": "#005047",
+              "on-primary-fixed-variant": "#003ea8",
+              "on-error": "#ffffff",
+              "surface-container-highest": "#d3e4fe",
+              "on-background": "#0b1c30",
+              "on-secondary-container": "#007165",
+              "error-container": "#ffdad6",
+              "surface-variant": "#d3e4fe",
+              "secondary-fixed-dim": "#3cddc7",
+              "outline-variant": "#c3c6d7",
+              "tertiary-fixed-dim": "#ffb596",
+              "on-tertiary-fixed": "#360f00",
+              secondary: "#006b5f",
+              "surface-container-lowest": "#ffffff",
+              "surface-dim": "#cbdbf5",
+              "on-tertiary-container": "#ffede6",
+              "on-primary": "#ffffff",
+              "surface-tint": "#0053db",
+              tertiary: "#943700",
+              "tertiary-container": "#bc4800",
+              "primary-container": "#2563eb",
+              primary: "#004ac6",
+              "surface-bright": "#f8f9ff",
+              error: "#ba1a1a",
+              "on-error-container": "#93000a",
+              "surface-container-low": "#eff4ff",
+              "on-secondary-fixed": "#00201c",
+              "tertiary-fixed": "#ffdbcd",
+              outline: "#737686",
+              "on-surface-variant": "#434655",
+              "primary-fixed": "#dbe1ff",
+            },
+            borderRadius: {
+              DEFAULT: "0.25rem",
+              lg: "0.5rem",
+              xl: "0.75rem",
+              full: "9999px",
+            },
+            spacing: {
+              lg: "48px",
+              "container-max": "1280px",
+              sm: "12px",
+              md: "24px",
+              base: "8px",
+              xs: "4px",
+              xl: "80px",
+              gutter: "24px",
+            },
+            fontFamily: {
+              "headline-md": ["Public Sans"],
+              "body-lg": ["Inter"],
+              "headline-lg-mobile": ["Public Sans"],
+              "body-sm": ["Inter"],
+              "body-md": ["Inter"],
+              "display-lg": ["Public Sans"],
+              "headline-lg": ["Public Sans"],
+              "label-md": ["Inter"],
+              "label-sm": ["Inter"],
+            },
+            fontSize: {
+              "headline-md": [
+                "24px",
+                { lineHeight: "32px", fontWeight: "600" },
+              ],
+              "body-lg": ["18px", { lineHeight: "28px", fontWeight: "400" }],
+              "headline-lg-mobile": [
+                "24px",
+                { lineHeight: "32px", fontWeight: "600" },
+              ],
+              "body-sm": ["14px", { lineHeight: "20px", fontWeight: "400" }],
+              "body-md": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+              "display-lg": [
+                "48px",
+                {
+                  lineHeight: "56px",
+                  letterSpacing: "-0.02em",
+                  fontWeight: "700",
+                },
+              ],
+              "headline-lg": [
+                "32px",
+                {
+                  lineHeight: "40px",
+                  letterSpacing: "-0.01em",
+                  fontWeight: "600",
+                },
+              ],
+              "label-md": [
+                "14px",
+                {
+                  lineHeight: "20px",
+                  letterSpacing: "0.05em",
+                  fontWeight: "600",
+                },
+              ],
+              "label-sm": ["12px", { lineHeight: "16px", fontWeight: "500" }],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 24;
+      }
+      .glass-card {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(226, 232, 240, 0.5);
+      }
+      .hero-gradient {
+        background:
+          radial-gradient(
+            circle at top right,
+            rgba(37, 99, 235, 0.05) 0%,
+            transparent 40%
+          ),
+          radial-gradient(
+            circle at bottom left,
+            rgba(45, 212, 191, 0.05) 0%,
+            transparent 40%
+          );
+      }
+    </style>
+  </head>
+  <body class="bg-background text-on-surface">
+    <!-- TopNavBar -->
+    <nav
+      class="sticky top-0 w-full z-50 bg-surface/80 backdrop-blur-md border-b border-outline-variant/30 shadow-sm transition-all duration-300 ease-in-out"
+    >
+      <div
+        class="flex justify-between items-center px-gutter max-w-container-max mx-auto h-16"
+      >
+        <div class="flex items-center gap-xs">
+          <span
+            class="material-symbols-outlined text-primary text-3xl"
+            style="font-variation-settings: &quot;FILL&quot; 1"
+            >auto_awesome</span
+          >
+          <span class="font-headline-md text-headline-md font-bold text-primary"
+            >Khora</span
+          >
+        </div>
+        <div class="hidden md:flex items-center gap-lg">
+          <a
+            class="text-on-surface-variant hover:text-primary transition-colors font-body-md text-body-md font-semibold border-b-2 border-primary pb-1"
+            href="#"
+            >Features</a
+          >
+          <a
+            class="text-on-surface-variant hover:text-primary transition-colors font-body-md text-body-md"
+            href="#"
+            >Pricing</a
+          >
+          <a
+            class="text-on-surface-variant hover:text-primary transition-colors font-body-md text-body-md"
+            href="#"
+            >About</a
+          >
+        </div>
+        <div class="flex items-center gap-md">
+          <button
+            class="hidden md:block text-primary font-label-md text-label-md hover:opacity-80 transition-opacity"
+          >
+            Login
+          </button>
+          <button
+            class="bg-primary text-on-primary px-md py-2.5 rounded-lg font-label-md text-label-md hover:opacity-90 transition-all shadow-md shadow-primary/20"
+          >
+            Get Started
+          </button>
+        </div>
+      </div>
+    </nav>
+    <main class="hero-gradient">
+      <!-- Hero Section -->
+      <section class="relative pt-xl pb-24 overflow-hidden">
+        <div
+          class="max-w-container-max mx-auto px-gutter grid grid-cols-1 lg:grid-cols-2 gap-xl items-center"
+        >
+          <div class="space-y-md">
+            <div
+              class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container text-primary font-label-sm text-label-sm"
+            >
+              <span
+                class="material-symbols-outlined text-[16px]"
+                style="font-variation-settings: &quot;FILL&quot; 1"
+                >bolt</span
+              >
+              IA para Professores
+            </div>
+            <h1
+              class="font-display-lg text-display-lg text-on-surface tracking-tight"
+            >
+              Crie provas e atividades em
+              <span class="text-primary italic">segundos</span> com IA.
+            </h1>
+            <p
+              class="font-body-lg text-body-lg text-on-surface-variant max-w-[540px]"
+            >
+              A Khora ajuda professores a economizar tempo e focar no que
+              importa: o ensino. Gere questões personalizadas, organize
+              conteúdos e acompanhe o progresso dos alunos.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-md pt-base">
+              <button
+                class="h-11 px-lg bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:scale-[1.02] transition-transform shadow-lg shadow-primary/25"
+              >
+                Começar agora gratuitamente
+              </button>
+              <button
+                class="h-11 px-lg border border-outline text-on-surface-variant rounded-lg font-label-md text-label-md hover:bg-surface-container transition-colors flex items-center justify-center gap-xs"
+              >
+                <span class="material-symbols-outlined text-[20px]"
+                  >play_circle</span
+                >
+                Ver como funciona
+              </button>
+            </div>
+            <div
+              class="flex items-center gap-md pt-lg border-t border-outline-variant/30"
+            >
+              <div class="flex -space-x-3">
+                <div
+                  class="w-10 h-10 rounded-full border-2 border-surface bg-slate-200"
+                  data-alt="A portrait of a smiling female educator in a brightly lit modern classroom. She is wearing professional attire and looking directly at the camera, conveying warmth and expertise. The lighting is soft and natural, emphasizing a high-key, professional academic environment."
+                  style="
+                    background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuB7E_v3RKcvRHFUZ_IwUrfGMjtl8xwfHg7gaL-Tnj3iNpz6u0wI5H-41LcgVIzYKO5RJJK2jauKjbnKcMh367OHj2rXMV-ZJ8OlQufyAlhQ25OCUfdWd6bumYqvIWdtH5ZaNfiKhqG07A6DRmgQQp5RjYuMwg-82U4u70sHvnSSAn7wU2IilN1YKoyJfUYRbG3yTV5r7z1-XNxBZFZmz__JXUS9wVyHizjVoON0zQbqYMEenbokl6E7ke030zWuhGDKsVZ139EY1Gc&quot;);
+                  "
+                ></div>
+                <div
+                  class="w-10 h-10 rounded-full border-2 border-surface bg-slate-300"
+                  data-alt="A portrait of a male high school teacher holding a digital tablet, standing in a contemporary school hallway. He looks confident and friendly, representing the modern, tech-savvy educator. The background is slightly blurred to keep the focus on his professional and approachable expression."
+                  style="
+                    background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuB-bd201hmzbLzhvFNN8blPs6eFkwEh2AicVkah9qqiskpKrw5TjhiLKuU4xpox9EFZEd8IKdRHjdKv6yPdmG_mJbVZoboAv5Ck2fUvrbn12NO_5FPktWg1UN40BB1cr-S_S4auKVrlq-NvhmSP4WyDYiZxHb8Fzfabmpc9vKimSWMHGYCW78oqpl1DjebAEtDzw4livGqeB_0pqsvC9v9AlgkeXk91hvlnE7xdF_RhVrKiM8v8KRGFy27kUzuTYU7CLVEoCwV6rFw&quot;);
+                  "
+                ></div>
+                <div
+                  class="w-10 h-10 rounded-full border-2 border-surface bg-slate-400"
+                  data-alt="A diverse group of teachers collaborating around a laptop in a brightly lit, modern faculty room. The scene is filled with natural light and vibrant energy, showcasing a collaborative educational environment. The style is clean and minimalist, with a professional yet warm atmosphere."
+                  style="
+                    background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuBBU3yqbnMMsoJWYcV6EE7j5souazhrQCey74-s2ZKoBjf7AlB9eDh-EPkBdt89RKFucqEeuVNVh0kMH_DcxjcDn_68UCJqs8_xqbfnhaG6MC2Jg0TBUoQtGyMQ_LJOM43IWoYoJlRkvOJe9X1C-PKKGXVCpgow7g1KDIQHuoCZNT3gmb79rt3lgtViXuvxz9tIhiimTOiNMbYtWsV1yN5sm20lM5pJWVkWt6njYW7a2GNgCx8-3r7qusl-L2-Z3R4AB08lo3U0u40&quot;);
+                  "
+                ></div>
+              </div>
+              <p class="font-body-sm text-body-sm text-on-surface-variant">
+                <span class="font-bold text-on-surface">Mais de 5.000</span>
+                professores transformando salas de aula.
+              </p>
+            </div>
+          </div>
+          <!-- Floating Bento Grid Visual -->
+          <div class="relative">
+            <div class="grid grid-cols-6 grid-rows-6 gap-sm h-[500px]">
+              <div
+                class="col-span-4 row-span-4 rounded-xl overflow-hidden shadow-2xl relative group"
+              >
+                <img
+                  class="w-full h-full object-cover"
+                  data-alt="A high-quality 3D digital illustration of a sleek, modern AI-powered dashboard for teachers. The screen shows generative quiz questions being created in real-time, with elegant blue and teal accents. The aesthetic is clean and futuristic, featuring soft ambient lighting and a shallow depth of field for a premium tool feel."
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuAv9eRoVt6_ITzIbXTPbkuNowpzDyf57B-q4OqNYNwWLbZWJTUMa27n2T7bocH7VVlNQTg415XiV5-DQTvkC7141RYuQ34AImn3xq8plZ53abxkm4oWflLFIAvyqlpd3mDJwTa3HybGl9vnQfQsobXM8xdZfLZt2kIZbfFrM2qZeVPPlG_ktYUfc8f-bYbw-mevndj9snZBKZtN-UcVE0AWDtVByUXFyPT1fqKNpRV7tasjlyOQj9IxAIIS4-p418rDAgCi_0TKHt8"
+                />
+                <div
+                  class="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent"
+                ></div>
+              </div>
+              <div
+                class="col-span-2 row-span-2 glass-card rounded-xl p-md flex flex-col justify-center items-center text-center"
+              >
+                <span
+                  class="material-symbols-outlined text-tertiary text-4xl mb-2"
+                  >auto_fix_high</span
+                >
+                <span class="font-headline-md text-headline-md text-tertiary"
+                  >98%</span
+                >
+                <span
+                  class="font-label-sm text-label-sm text-on-surface-variant"
+                  >Precisão IA</span
+                >
+              </div>
+              <div
+                class="col-span-2 row-span-3 rounded-xl overflow-hidden shadow-xl"
+              >
+                <img
+                  class="w-full h-full object-cover"
+                  data-alt="A vibrant, minimalist digital art piece showing stylized educational icons like books, atoms, and lightbulbs floating in a serene, airy workspace. The color palette uses Khora's primary blue and secondary teal, creating a sense of 'Magic meets Tool.' The lighting is soft and professional."
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuAr-VHaIurtkuvvP-kXJo7LAdA_gwFf8xgJ_WV7mbKUkN4zvN0i32xkEWYwnHcsmhK1hwJciehZzW7LDCr8wKa3jGhe8SDiqU_exkN5mC0pkUXd07DTlL-3A-EdB5fhtLMY8txfzoOnNizgWi7aIt-CxXJtbrpXAqmR3InTD5pYpCOZsAojGBv0tqlD5BR_4i_0USCyvANW0f5C2N0vc1kWpUsKnj1YrdmfByn5wT-RTf_bP_XeSmV6XhSDOmVtIUkShjH65aAW9fo"
+                />
+              </div>
+              <div
+                class="col-span-4 row-span-2 glass-card rounded-xl p-md flex items-center gap-md"
+              >
+                <div
+                  class="w-12 h-12 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container"
+                >
+                  <span class="material-symbols-outlined">schedule</span>
+                </div>
+                <div>
+                  <h4 class="font-label-md text-label-md text-on-surface">
+                    Economia de Tempo
+                  </h4>
+                  <p class="font-body-sm text-body-sm text-on-surface-variant">
+                    -15h por semana em média
+                  </p>
+                </div>
+              </div>
+            </div>
+            <!-- Decorative background blur -->
+            <div
+              class="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-primary/5 blur-[100px] rounded-full"
+            ></div>
+          </div>
+        </div>
+      </section>
+      <!-- Features Section -->
+      <section class="py-xl bg-surface-container-lowest">
+        <div class="max-w-container-max mx-auto px-gutter">
+          <div class="text-center max-w-2xl mx-auto mb-xl">
+            <h2 class="font-headline-lg text-headline-lg text-on-surface mb-sm">
+              Funcionalidades pensadas para você
+            </h2>
+            <p class="font-body-md text-body-md text-on-surface-variant">
+              Tudo o que você precisa para criar materiais didáticos de alta
+              qualidade sem o esforço manual de antes.
+            </p>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-md">
+            <!-- Feature 1 -->
+            <div
+              class="group p-md rounded-xl bg-surface hover:bg-white hover:shadow-lg hover:shadow-primary/5 border border-outline-variant/30 transition-all duration-300"
+            >
+              <div
+                class="w-12 h-12 rounded-lg bg-primary-fixed flex items-center justify-center text-primary mb-md group-hover:scale-110 transition-transform"
+              >
+                <span
+                  class="material-symbols-outlined text-2xl"
+                  style="font-variation-settings: &quot;FILL&quot; 1"
+                  >psychology</span
+                >
+              </div>
+              <h3
+                class="font-headline-md text-headline-md text-on-surface mb-xs"
+              >
+                Geração Inteligente
+              </h3>
+              <p class="font-body-md text-body-md text-on-surface-variant">
+                Crie questões de múltipla escolha ou dissertativas a partir de
+                qualquer texto ou tópico em segundos.
+              </p>
+            </div>
+            <!-- Feature 2 -->
+            <div
+              class="group p-md rounded-xl bg-surface hover:bg-white hover:shadow-lg hover:shadow-primary/5 border border-outline-variant/30 transition-all duration-300"
+            >
+              <div
+                class="w-12 h-12 rounded-lg bg-secondary-container flex items-center justify-center text-on-secondary-container mb-md group-hover:scale-110 transition-transform"
+              >
+                <span
+                  class="material-symbols-outlined text-2xl"
+                  style="font-variation-settings: &quot;FILL&quot; 1"
+                  >database</span
+                >
+              </div>
+              <h3
+                class="font-headline-md text-headline-md text-on-surface mb-xs"
+              >
+                Banco de Questões
+              </h3>
+              <p class="font-body-md text-body-md text-on-surface-variant">
+                Tenha acesso a milhares de perguntas revisadas por especialistas
+                e prontas para uso imediato em suas aulas.
+              </p>
+            </div>
+            <!-- Feature 3 -->
+            <div
+              class="group p-md rounded-xl bg-surface hover:bg-white hover:shadow-lg hover:shadow-primary/5 border border-outline-variant/30 transition-all duration-300"
+            >
+              <div
+                class="w-12 h-12 rounded-lg bg-tertiary-fixed flex items-center justify-center text-tertiary mb-md group-hover:scale-110 transition-transform"
+              >
+                <span
+                  class="material-symbols-outlined text-2xl"
+                  style="font-variation-settings: &quot;FILL&quot; 1"
+                  >ios_share</span
+                >
+              </div>
+              <h3
+                class="font-headline-md text-headline-md text-on-surface mb-xs"
+              >
+                Integração Fácil
+              </h3>
+              <p class="font-body-md text-body-md text-on-surface-variant">
+                Exporte suas atividades diretamente para PDF, Google Forms ou
+                Word com apenas um clique.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- CTA / Social Proof Combined Section -->
+      <section class="py-xl">
+        <div class="max-w-container-max mx-auto px-gutter">
+          <div
+            class="relative rounded-2xl overflow-hidden bg-primary text-on-primary p-xl md:p-24 text-center"
+          >
+            <!-- Subtle background pattern -->
+            <div
+              class="absolute inset-0 opacity-10 pointer-events-none"
+              style="
+                background-image: radial-gradient(#fff 1px, transparent 1px);
+                background-size: 32px 32px;
+              "
+            ></div>
+            <div class="relative z-10 space-y-md max-w-3xl mx-auto">
+              <h2 class="font-display-lg text-display-lg tracking-tight">
+                Pronto para revolucionar sua sala de aula?
+              </h2>
+              <p class="font-body-lg text-body-lg opacity-90">
+                Junte-se a milhares de educadores que estão redescobrindo o
+                prazer de ensinar enquanto a IA cuida do trabalho pesado.
+              </p>
+              <div
+                class="flex flex-col sm:flex-row items-center justify-center gap-md pt-md"
+              >
+                <button
+                  class="w-full sm:w-auto h-14 px-lg bg-white text-primary rounded-lg font-label-md text-label-md font-bold hover:bg-surface-container transition-colors shadow-xl"
+                >
+                  Começar gratuitamente agora
+                </button>
+                <span class="text-label-sm font-label-sm opacity-80"
+                  >Não requer cartão de crédito</span
+                >
+              </div>
+              <div
+                class="pt-lg flex flex-wrap justify-center gap-lg items-center opacity-60"
+              >
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined">verified</span>
+                  <span class="font-label-sm">Certificado MEC</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined">shield</span>
+                  <span class="font-label-sm">LGPD Compliant</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined">cloud_done</span>
+                  <span class="font-label-sm">Cloud Sync</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <!-- Footer -->
+    <footer
+      class="bg-surface-container-low border-t border-outline-variant/30 py-xl"
+    >
+      <div
+        class="max-w-container-max mx-auto px-gutter grid grid-cols-2 md:grid-cols-4 gap-md mb-xl"
+      >
+        <div class="col-span-2 md:col-span-1 space-y-md">
+          <div class="flex items-center gap-xs">
+            <span
+              class="material-symbols-outlined text-primary text-2xl"
+              style="font-variation-settings: &quot;FILL&quot; 1"
+              >auto_awesome</span
+            >
+            <span
+              class="font-headline-sm text-headline-sm font-bold text-on-surface"
+              >Khora</span
+            >
+          </div>
+          <p
+            class="font-body-sm text-body-sm text-on-surface-variant max-w-[200px]"
+          >
+            Capacitando educadores com inteligência e simplicidade.
+          </p>
+        </div>
+        <div class="space-y-sm">
+          <h4 class="font-label-md text-label-md text-on-surface">Produto</h4>
+          <ul class="space-y-xs">
+            <li>
+              <a
+                class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors"
+                href="#"
+                >Features</a
+              >
+            </li>
+            <li>
+              <a
+                class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors"
+                href="#"
+                >Pricing</a
+              >
+            </li>
+            <li>
+              <a
+                class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors"
+                href="#"
+                >Help Center</a
+              >
+            </li>
+          </ul>
+        </div>
+        <div class="space-y-sm">
+          <h4 class="font-label-md text-label-md text-on-surface">Empresa</h4>
+          <ul class="space-y-xs">
+            <li>
+              <a
+                class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors"
+                href="#"
+                >About</a
+              >
+            </li>
+            <li>
+              <a
+                class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors"
+                href="#"
+                >Contact Us</a
+              >
+            </li>
+            <li>
+              <a
+                class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors"
+                href="#"
+                >LinkedIn</a
+              >
+            </li>
+          </ul>
+        </div>
+        <div class="space-y-sm">
+          <h4 class="font-label-md text-label-md text-on-surface">Legal</h4>
+          <ul class="space-y-xs">
+            <li>
+              <a
+                class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors"
+                href="#"
+                >Privacy Policy</a
+              >
+            </li>
+            <li>
+              <a
+                class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors"
+                href="#"
+                >Terms of Service</a
+              >
+            </li>
+            <li>
+              <a
+                class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors"
+                href="#"
+                >Twitter</a
+              >
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div
+        class="max-w-container-max mx-auto px-gutter pt-md border-t border-outline-variant/20"
+      >
+        <p class="font-body-sm text-body-sm text-on-surface-variant">
+          © 2024 Khora AI. Empowering educators worldwide.
+        </p>
+      </div>
+    </footer>
+    <script>
+      // Micro-interaction for buttons
+      document.querySelectorAll("button").forEach((button) => {
+        button.addEventListener("mousedown", () => {
+          button.classList.add("scale-95");
+        });
+        button.addEventListener("mouseup", () => {
+          button.classList.remove("scale-95");
+        });
+        button.addEventListener("mouseleave", () => {
+          button.classList.remove("scale-95");
+        });
+      });
+
+      // Simple scroll reveal effect
+      const revealOnScroll = () => {
+        const elements = document.querySelectorAll(".group, .glass-card, h2");
+        elements.forEach((el) => {
+          const rect = el.getBoundingClientRect();
+          if (rect.top < window.innerHeight * 0.9) {
+            el.classList.add("opacity-100", "translate-y-0");
+            el.classList.remove("opacity-0", "translate-y-8");
+          }
+        });
+      };
+
+      window.addEventListener("scroll", revealOnScroll);
+      // Initial check
+      revealOnScroll();
+    </script>
+  </body>
+</html>
