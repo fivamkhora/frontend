@@ -6,7 +6,7 @@ import vm from "node:vm";
 import ts from "typescript";
 
 function loadAuthModule(fetchMock) {
-  const sourcePath = join(process.cwd(), "src", "services", "auth.ts");
+  const sourcePath = join(process.cwd(), "src", "services", "authService.ts");
   const source = readFileSync(sourcePath, "utf8");
   const output = ts.transpileModule(source, {
     compilerOptions: {
@@ -66,4 +66,35 @@ test("login rejects with the generic auth error message", async () => {
     () => login("joao.professor", "senha-errada"),
     /Usuario ou senha invalidos/,
   );
+});
+
+test("fetchAuthenticatedUser gets the current user from whoami", async () => {
+  const fetchCalls = [];
+  const { fetchAuthenticatedUser } = loadAuthModule(async (...args) => {
+    fetchCalls.push(args);
+
+    return {
+      json: async () => ({
+        email: "joao.professor@example.com",
+        id: 1,
+        name: "Joao Professor Exemplo",
+        role: "Professor",
+        username: "joao.professor",
+      }),
+      ok: true,
+    };
+  });
+
+  const response = await fetchAuthenticatedUser();
+
+  assert.deepEqual(response, {
+    email: "joao.professor@example.com",
+    id: 1,
+    name: "Joao Professor Exemplo",
+    role: "Professor",
+    username: "joao.professor",
+  });
+  assert.equal(fetchCalls.length, 1);
+  assert.equal(fetchCalls[0][0], "/api/auth/whoami");
+  assert.equal(fetchCalls[0][1].headers.Accept, "application/json");
 });

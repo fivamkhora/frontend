@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { login } from "@/services/auth";
+import { fetchAuthenticatedUser, login } from "@/services/authService";
 import Link from "next/link";
 import type { SyntheticEvent } from "react";
 import {
@@ -30,6 +30,7 @@ export default function LoginPage() {
 
     try {
       await login(username, password);
+      await fetchAuthenticatedUser();
 
       const redirectTo = new URLSearchParams(window.location.search).get(
         "redirect",

@@ -120,6 +120,14 @@ POST ${BFF_BASE_URL}/api/v1/auth/user/signin
 
 No sucesso, o servidor cria um cookie `khora_session` com `httpOnly`, `secure` e `sameSite=lax`. O JWT retornado pelo BFF fica dentro da sessao assinada e nao e exposto ao frontend.
 
+Apos autenticar, o frontend usa `fetchAuthenticatedUser()` de `src/services/authService.ts` para chamar `/api/auth/whoami`. Essa rota le o JWT da sessao httpOnly no servidor e consulta:
+
+```text
+GET ${BFF_BASE_URL}/api/v1/auth/user/whoami
+```
+
+O retorno contem apenas os dados do usuario logado necessarios para a interface, como `id`, `username`, `name`, `email` e `role`.
+
 Rotas privadas sao protegidas pelo `middleware.ts`:
 
 ```text
