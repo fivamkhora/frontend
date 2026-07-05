@@ -3,7 +3,7 @@ import {
   jsonError,
   proxyBffJson,
   readJsonPayload,
-} from "../_lib/bff";
+} from "../../_lib/bff";
 
 export const runtime = "nodejs";
 

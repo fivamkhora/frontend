@@ -344,7 +344,7 @@ function ConfeccaoProvasContent() {
 
       try {
         const response = await fetch(
-          `/api/assessments?assessmentId=${encodeURIComponent(
+          `/api/ia/assessments?assessmentId=${encodeURIComponent(
             assessmentIdToLoad,
           )}`,
           {
@@ -422,7 +422,7 @@ function ConfeccaoProvasContent() {
 
     try {
       const response = await fetch(
-        isRevisionMode ? "/api/revisions" : "/api/assessments",
+        isRevisionMode ? "/api/ia/revisions" : "/api/ia/assessments",
         {
           method: "POST",
           headers: {
