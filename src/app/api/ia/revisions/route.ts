@@ -3,7 +3,8 @@ import {
   jsonError,
   proxyBffJson,
   readJsonPayload,
-} from "../../_lib/bff";
+} from "@/lib/bff";
+import { getAuthSession } from "@/lib/auth/server";
 
 export const runtime = "nodejs";
 
@@ -26,6 +27,12 @@ function isRevisionPayload(payload: unknown): payload is RevisionPayload {
 }
 
 export async function POST(request: Request) {
+  const session = await getAuthSession();
+
+  if (!session) {
+    return jsonError("Nao autenticado.", 401);
+  }
+
   const payload = await readJsonPayload(request);
 
   if (!payload) {
@@ -41,6 +48,7 @@ export async function POST(request: Request) {
   }
 
   return proxyBffJson({
+    authToken: session.token,
     body: {
       adjustmentRequest: payload.adjustmentRequest,
     },

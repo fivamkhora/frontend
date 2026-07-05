@@ -1,16 +1,10 @@
 export type LoginResponse = {
   role: string;
-  token: string;
 };
 
 type LoginErrorResponse = {
   error?: string;
   message?: string;
-  upstreamResponse?: {
-    detail?: string;
-    error?: string;
-    message?: string;
-  };
 };
 
 export async function login(
@@ -32,10 +26,7 @@ export async function login(
     const errorData = data as LoginErrorResponse;
 
     throw new Error(
-      errorData.upstreamResponse?.detail ||
-        errorData.upstreamResponse?.message ||
-        errorData.upstreamResponse?.error ||
-        errorData.message ||
+      errorData.message ||
         errorData.error ||
         "Nao foi possivel autenticar o usuario.",
     );

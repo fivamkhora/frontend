@@ -29,13 +29,17 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const data = await login(username, password);
+      await login(username, password);
 
-      localStorage.setItem("khora_token", data.token);
-      localStorage.setItem("khora_role", data.role);
-      localStorage.setItem("khora_auth", JSON.stringify(data));
+      const redirectTo = new URLSearchParams(window.location.search).get(
+        "redirect",
+      );
 
-      router.push("/dashboard");
+      router.push(
+        redirectTo?.startsWith("/") && !redirectTo.startsWith("//")
+          ? redirectTo
+          : "/dashboard",
+      );
     } catch (err) {
       setError(
         err instanceof Error

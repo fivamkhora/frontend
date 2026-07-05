@@ -7,10 +7,10 @@ import { useRouter } from "next/navigation";
 export default function TemporaryDashboardPage() {
     const router = useRouter();
 
-    const handleLogout = () => {
-        localStorage.removeItem("khora_token");
-        localStorage.removeItem("khora_role");
-        localStorage.removeItem("khora_auth");
+    const handleLogout = async () => {
+        await fetch("/api/auth/logout", {
+            method: "POST",
+        });
         router.push('/login');
     };
 

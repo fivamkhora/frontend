@@ -99,7 +99,10 @@ Configure a URL do BFF nos ambientes de preview e producao:
 
 ```text
 BFF_BASE_URL=https://bff-khora.onrender.com
+AUTH_SESSION_SECRET=troque-por-um-segredo-com-no-minimo-32-caracteres
 ```
+
+`AUTH_SESSION_SECRET` e obrigatorio e deve ter no minimo 32 caracteres. Use um valor forte e diferente por ambiente.
 
 A pagina `/confeccao` chama a rota interna `/api/ia/assessments`, e o Next.js encaminha a requisicao para:
 
@@ -115,7 +118,26 @@ A pagina `/login` chama a rota interna `/api/auth/signin`, e o Next.js encaminha
 POST ${BFF_BASE_URL}/api/v1/auth/user/signin
 ```
 
-No sucesso, a tela armazena `khora_token`, `khora_role` e `khora_auth` no `localStorage` para uso no frontend.
+No sucesso, o servidor cria um cookie `khora_session` com `httpOnly`, `secure` e `sameSite=lax`. O JWT retornado pelo BFF fica dentro da sessao assinada e nao e exposto ao frontend.
+
+Rotas privadas sao protegidas pelo `middleware.ts`:
+
+```text
+/dashboard
+/confeccao
+/provas
+/api/ia/*
+```
+
+Para proteger uma nova rota de pagina, adicione o prefixo em `privatePageRoutes` no `middleware.ts`. Para proteger novas APIs, mantenha-as sob `/api/ia/*` ou adicione um novo prefixo em `isPrivateApi`.
+
+Em Server Components ou Route Handlers, use as funcoes reutilizaveis:
+
+```ts
+import { getAuthSession, requireAuthSession } from "@/lib/auth/server";
+```
+
+`requireAuthSession()` redireciona para `/login` quando nao houver sessao valida. `getAuthSession()` retorna a sessao ou `null`.
 
 Valores enviados para o BFF:
 

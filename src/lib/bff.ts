@@ -7,6 +7,7 @@ export const BFF_BASE_URL =
 export const IA_ASSESSMENTS_PATH = "/api/v1/ia/assessments";
 
 type BffRequestOptions = {
+  authToken?: string;
   body?: unknown;
   errorMessage: string;
   method: "GET" | "POST";
@@ -34,6 +35,7 @@ export function jsonError(error: string, status: number) {
 }
 
 export async function proxyBffJson({
+  authToken,
   body,
   errorMessage,
   method,
@@ -44,6 +46,7 @@ export async function proxyBffJson({
       method,
       headers: {
         Accept: "application/json",
+        ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
         ...(body ? { "Content-Type": "application/json" } : {}),
       },
       body: body ? JSON.stringify(body) : undefined,

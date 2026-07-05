@@ -3,7 +3,8 @@ import {
   jsonError,
   proxyBffJson,
   readJsonPayload,
-} from "../../_lib/bff";
+} from "@/lib/bff";
+import { getAuthSession } from "@/lib/auth/server";
 
 export const runtime = "nodejs";
 
@@ -36,10 +37,17 @@ function isAssessmentPayload(payload: unknown): payload is AssessmentPayload {
 }
 
 export async function GET(request: Request) {
+  const session = await getAuthSession();
+
+  if (!session) {
+    return jsonError("Nao autenticado.", 401);
+  }
+
   const { search, searchParams } = new URL(request.url);
   const assessmentId = searchParams.get("assessmentId");
 
   return proxyBffJson({
+    authToken: session.token,
     errorMessage: "Erro ao listar avaliacoes no BFF.",
     method: "GET",
     path: assessmentId
@@ -49,6 +57,12 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const session = await getAuthSession();
+
+  if (!session) {
+    return jsonError("Nao autenticado.", 401);
+  }
+
   const payload = await readJsonPayload(request);
 
   if (!payload) {
@@ -71,6 +85,7 @@ export async function POST(request: Request) {
   }
 
   return proxyBffJson({
+    authToken: session.token,
     body: payload,
     errorMessage: "Erro ao criar avaliacao no BFF.",
     method: "POST",

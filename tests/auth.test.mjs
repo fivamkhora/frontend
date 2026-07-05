@@ -35,7 +35,6 @@ test("login posts credentials to the internal auth route", async () => {
     return {
       json: async () => ({
         role: "Professor",
-        token: "jwt-token",
       }),
       ok: true,
     };
@@ -45,7 +44,6 @@ test("login posts credentials to the internal auth route", async () => {
 
   assert.deepEqual(response, {
     role: "Professor",
-    token: "jwt-token",
   });
   assert.equal(fetchCalls.length, 1);
   assert.equal(fetchCalls[0][0], "/api/auth/signin");
@@ -56,18 +54,16 @@ test("login posts credentials to the internal auth route", async () => {
   );
 });
 
-test("login rejects with the BFF error message", async () => {
+test("login rejects with the generic auth error message", async () => {
   const { login } = loadAuthModule(async () => ({
     json: async () => ({
-      upstreamResponse: {
-        detail: "Credenciais invalidas.",
-      },
+      error: "Usuario ou senha invalidos.",
     }),
     ok: false,
   }));
 
   await assert.rejects(
     () => login("joao.professor", "senha-errada"),
-    /Credenciais invalidas/,
+    /Usuario ou senha invalidos/,
   );
 });
