@@ -39,8 +39,10 @@ export async function login(
   const data = await readJson<LoginResponse | ApiErrorResponse>(response);
 
   if (!response.ok) {
+    const errorData = data as ApiErrorResponse;
+
     throw new Error(
-      getErrorMessage(data, "Nao foi possivel autenticar o usuario."),
+      getErrorMessage(errorData, "Nao foi possivel autenticar o usuario."),
     );
   }
 
@@ -56,8 +58,13 @@ export async function fetchAuthenticatedUser(): Promise<AuthenticatedUser> {
   const data = await readJson<AuthenticatedUser | ApiErrorResponse>(response);
 
   if (!response.ok) {
+    const errorData = data as ApiErrorResponse;
+
     throw new Error(
-      getErrorMessage(data, "Nao foi possivel buscar o usuario autenticado."),
+      getErrorMessage(
+        errorData,
+        "Nao foi possivel buscar o usuario autenticado.",
+      ),
     );
   }
 
