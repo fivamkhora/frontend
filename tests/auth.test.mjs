@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import vm from "node:vm";
 import ts from "typescript";
 
-function loadAuthModule() {
+function loadAuthModule(fetchMock) {
   const sourcePath = join(process.cwd(), "src", "services", "auth.ts");
   const source = readFileSync(sourcePath, "utf8");
   const output = ts.transpileModule(source, {
@@ -18,8 +18,8 @@ function loadAuthModule() {
   const testModule = { exports: {} };
   const context = {
     exports: testModule.exports,
+    fetch: fetchMock,
     module: testModule,
-    setTimeout,
   };
 
   vm.runInNewContext(output, context, { filename: sourcePath });
@@ -27,23 +27,47 @@ function loadAuthModule() {
   return testModule.exports;
 }
 
-test("mockLogin returns a bearer token for valid credentials", async () => {
-  const { mockLogin } = loadAuthModule();
+test("login posts credentials to the internal auth route", async () => {
+  const fetchCalls = [];
+  const { login } = loadAuthModule(async (...args) => {
+    fetchCalls.push(args);
 
-  const response = await mockLogin("professor@khora.com", "senha123");
+    return {
+      json: async () => ({
+        role: "Professor",
+        token: "jwt-token",
+      }),
+      ok: true,
+    };
+  });
 
-  assert.equal(response.token_type, "Bearer");
-  assert.equal(response.access_token, "mock-jwt-token-ey123456789...");
-  assert.equal(response.user.username, "professor@khora.com");
-  assert.equal(response.user.role, "professor");
+  const response = await login("joao.professor", "senha123");
+
+  assert.deepEqual(response, {
+    role: "Professor",
+    token: "jwt-token",
+  });
+  assert.equal(fetchCalls.length, 1);
+  assert.equal(fetchCalls[0][0], "/api/auth/signin");
+  assert.equal(fetchCalls[0][1].method, "POST");
+  assert.equal(
+    fetchCalls[0][1].body,
+    JSON.stringify({ username: "joao.professor", password: "senha123" }),
+  );
 });
 
-test("mockLogin rejects when password has fewer than 6 characters", async () => {
-  const { mockLogin } = loadAuthModule();
+test("login rejects with the BFF error message", async () => {
+  const { login } = loadAuthModule(async () => ({
+    json: async () => ({
+      upstreamResponse: {
+        detail: "Credenciais invalidas.",
+      },
+    }),
+    ok: false,
+  }));
 
   await assert.rejects(
-    () => mockLogin("professor@khora.com", "12345"),
-    (error) =>
-      typeof error.detail === "string" && error.detail.includes("senha"),
+    () => login("joao.professor", "senha-errada"),
+    /Credenciais invalidas/,
   );
 });

@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { mockLogin } from "@/services/auth";
+import { login } from "@/services/auth";
 import Link from "next/link";
 import type { SyntheticEvent } from "react";
 import {
   Brain,
   Eye,
-  EyeOff, // Adicionado aqui
+  EyeOff,
   FileText,
   LoaderCircle,
   Lock,
@@ -18,7 +18,7 @@ import {
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // Novo estado criado aqui
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -29,15 +29,19 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const data = await mockLogin(username, password);
-      console.log("Login bem-sucedido:", data);
+      const data = await login(username, password);
 
-      localStorage.setItem("khora_token", data.access_token);
+      localStorage.setItem("khora_token", data.token);
+      localStorage.setItem("khora_role", data.role);
+      localStorage.setItem("khora_auth", JSON.stringify(data));
 
       router.push("/dashboard");
     } catch (err) {
-      const apiError = err as { detail?: string };
-      setError(apiError.detail || "Ocorreu um erro durante o login.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Ocorreu um erro durante o login.",
+      );
     } finally {
       setLoading(false);
     }

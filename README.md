@@ -2,7 +2,7 @@
 
 Frontend web do sistema Khora, desenvolvido com Next.js, React e TypeScript.
 
-O projeto possui uma tela de login com autenticacao simulada, redirecionamento da raiz (`/`) para `/login` e uma tela temporaria de dashboard em `/dashboard`.
+O projeto possui uma tela de login integrada ao BFF, redirecionamento da raiz (`/`) para `/login` e uma tela temporaria de dashboard em `/dashboard`.
 
 ## Stack
 
@@ -21,8 +21,8 @@ O projeto possui uma tela de login com autenticacao simulada, redirecionamento d
 src/app/page.tsx              Redireciona / para /login
 src/app/login/page.tsx        Tela de login
 src/app/dashboard/page.tsx    Dashboard temporario
-src/services/auth.ts          Login simulado
-tests/auth.test.mjs           Testes automatizados do login simulado
+src/services/auth.ts          Cliente de autenticacao
+tests/auth.test.mjs           Testes automatizados do cliente de autenticacao
 docker/Dockerfile             Build Docker de producao
 vercel.json                   Configuracao de build da Vercel
 .github/workflows/ci.yml      CI, scan Trivy, Docker Hub e deploy Render
@@ -68,10 +68,10 @@ npm run test:vercel
 
 ## Testes
 
-Os testes usam o runner nativo do Node.js (`node:test`) e validam o comportamento do login simulado:
+Os testes usam o runner nativo do Node.js (`node:test`) e validam o comportamento do cliente de autenticacao:
 
-- credenciais validas retornam token Bearer;
-- senha com menos de 6 caracteres rejeita o login.
+- credenciais sao enviadas para a rota interna de autenticacao;
+- erros retornados pelo BFF sao propagados para a tela.
 
 Arquivo de teste:
 
@@ -108,6 +108,14 @@ POST ${BFF_BASE_URL}/api/v1/ia/assessments
 ```
 
 Esse proxy server-side evita acoplar a tela diretamente ao host do BFF e segue melhor o modelo de deploy em Vercel/Node.js.
+
+A pagina `/login` chama a rota interna `/api/auth/signin`, e o Next.js encaminha a requisicao para:
+
+```text
+POST ${BFF_BASE_URL}/api/v1/auth/user/signin
+```
+
+No sucesso, a tela armazena `khora_token`, `khora_role` e `khora_auth` no `localStorage` para uso no frontend.
 
 Valores enviados para o BFF:
 

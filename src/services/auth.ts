@@ -1,35 +1,45 @@
-interface LoginResponse {
-    access_token: string;
-    token_type: string;
-    user: {
-        id: string;
-        username: string;
-        role: string;
-    };
-}
+export type LoginResponse = {
+  role: string;
+  token: string;
+};
 
-interface ApiError {
-    detail: string;
-}
+type LoginErrorResponse = {
+  error?: string;
+  message?: string;
+  upstreamResponse?: {
+    detail?: string;
+    error?: string;
+    message?: string;
+  };
+};
 
-// Simulando a chamada de Login
-export async function mockLogin(username: string, password: string): Promise<LoginResponse> {
-    return new Promise((resolve, reject) => {
-        setTimeout(() => {
-            // Regra para o teste passar visualmente
-            if (username && password.length >= 6) {
-                resolve({
-                    access_token: "mock-jwt-token-ey123456789...",
-                    token_type: "Bearer",
-                    user: {
-                        id: "550e8400-e29b-41d4-a716-446655440000",
-                        username: username,
-                        role: "professor"
-                    }
-                });
-            } else {
-                reject({detail: "Email inválido ou senha muito curta."} satisfies ApiError);
-            }
-        }, 1000); // 1 segundo de delay para simular a rede
-    });
+export async function login(
+  username: string,
+  password: string,
+): Promise<LoginResponse> {
+  const response = await fetch("/api/auth/signin", {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ username, password }),
+  });
+
+  const data = (await response.json()) as LoginResponse | LoginErrorResponse;
+
+  if (!response.ok) {
+    const errorData = data as LoginErrorResponse;
+
+    throw new Error(
+      errorData.upstreamResponse?.detail ||
+        errorData.upstreamResponse?.message ||
+        errorData.upstreamResponse?.error ||
+        errorData.message ||
+        errorData.error ||
+        "Nao foi possivel autenticar o usuario.",
+    );
+  }
+
+  return data as LoginResponse;
 }

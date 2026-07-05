@@ -8,9 +8,9 @@ export default function TemporaryDashboardPage() {
     const router = useRouter();
 
     const handleLogout = () => {
-        // LImpa o token do localStorage para simular o logout real
         localStorage.removeItem("khora_token");
-        //Retorna para a tela de login
+        localStorage.removeItem("khora_role");
+        localStorage.removeItem("khora_auth");
         router.push('/login');
     };
 
@@ -29,8 +29,8 @@ export default function TemporaryDashboardPage() {
                 </span>
 
                 <p className="text-sm text-gray-500 mb-8 leading-relaxed">
-                    O Login simulado foi um sucesso e o token de acesso foi armazenado no navegador! Esta área será totalmente integrada
-                    com as funcionalidade de turmas e relatórios na próxima etapa.
+                    Login realizado com sucesso e token de acesso armazenado no navegador. Esta área será totalmente integrada
+                    com as funcionalidades de turmas e relatórios na próxima etapa.
                 </p>
 
                 <Link
