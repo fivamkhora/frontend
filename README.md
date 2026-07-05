@@ -112,7 +112,7 @@ POST ${BFF_BASE_URL}/api/v1/ia/assessments
 
 Esse proxy server-side evita acoplar a tela diretamente ao host do BFF e segue melhor o modelo de deploy em Vercel/Node.js.
 
-A pagina `/login` chama a rota interna `/api/auth/signin`, e o Next.js encaminha a requisicao para:
+A pagina `/login` chama a rota publica interna `/api/public/auth/signin`, e o Next.js encaminha a requisicao para:
 
 ```text
 POST ${BFF_BASE_URL}/api/v1/auth/user/signin
@@ -128,6 +128,8 @@ Rotas privadas sao protegidas pelo `middleware.ts`:
 /provas
 /api/ia/*
 ```
+
+Rotas sob `/api/public/*` sao excecoes publicas e nao exigem sessao autenticada. Use esse prefixo somente para endpoints que precisam estar disponiveis antes do login, como signin.
 
 Para proteger uma nova rota de pagina, adicione o prefixo em `privatePageRoutes` no `middleware.ts`. Para proteger novas APIs, mantenha-as sob `/api/ia/*` ou adicione um novo prefixo em `isPrivateApi`.
 

@@ -46,7 +46,7 @@ test("login posts credentials to the internal auth route", async () => {
     role: "Professor",
   });
   assert.equal(fetchCalls.length, 1);
-  assert.equal(fetchCalls[0][0], "/api/auth/signin");
+  assert.equal(fetchCalls[0][0], "/api/public/auth/signin");
   assert.equal(fetchCalls[0][1].method, "POST");
   assert.equal(
     fetchCalls[0][1].body,

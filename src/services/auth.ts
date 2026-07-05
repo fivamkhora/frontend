@@ -11,7 +11,7 @@ export async function login(
   username: string,
   password: string,
 ): Promise<LoginResponse> {
-  const response = await fetch("/api/auth/signin", {
+  const response = await fetch("/api/public/auth/signin", {
     method: "POST",
     headers: {
       Accept: "application/json",
