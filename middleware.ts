@@ -10,7 +10,11 @@ function isPrivatePage(pathname: string) {
 }
 
 function isPrivateApi(pathname: string) {
-  return pathname.startsWith("/api/ia/") || pathname.startsWith("/api/turma/");
+  return (
+    pathname.startsWith("/api/classrooms/") ||
+    pathname.startsWith("/api/ia/") ||
+    pathname.startsWith("/api/turma/")
+  );
 }
 
 export async function middleware(request: NextRequest) {
@@ -44,6 +48,7 @@ export const config = {
     "/classes/:path*",
     "/confeccao/:path*",
     "/provas/:path*",
+    "/api/classrooms/:path*",
     "/api/ia/:path*",
     "/api/turma/:path*",
   ],

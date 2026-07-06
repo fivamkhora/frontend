@@ -128,18 +128,30 @@ GET ${BFF_BASE_URL}/api/v1/auth/user/whoami
 
 O retorno contem apenas os dados do usuario logado necessarios para a interface, como `id`, `username`, `name`, `email` e `role`.
 
+A pagina `/classes/[id]` chama a rota interna `/api/classrooms/{id}`. Essa rota le a sessao httpOnly, busca os membros no BFF de Turma e depois busca os usuarios no BFF Auth:
+
+```text
+GET ${BFF_BASE_URL}/api/v1/turma/classrooms/{id}
+GET ${BFF_BASE_URL}/api/v1/auth/users?ids=1%2C2
+```
+
+A resposta entregue ao frontend separa `teachers` e `students` e nao retorna CPF, data de nascimento ou token.
+
 Rotas privadas sao protegidas pelo `middleware.ts`:
 
 ```text
 /dashboard
+/classes
 /confeccao
 /provas
+/api/classrooms/*
 /api/ia/*
+/api/turma/*
 ```
 
 Rotas sob `/api/public/*` sao excecoes publicas e nao exigem sessao autenticada. Use esse prefixo somente para endpoints que precisam estar disponiveis antes do login, como signin.
 
-Para proteger uma nova rota de pagina, adicione o prefixo em `privatePageRoutes` no `middleware.ts`. Para proteger novas APIs, mantenha-as sob `/api/ia/*` ou adicione um novo prefixo em `isPrivateApi`.
+Para proteger uma nova rota de pagina, adicione o prefixo em `privatePageRoutes` no `middleware.ts`. Para proteger novas APIs, mantenha-as sob um prefixo privado ja protegido ou adicione um novo prefixo em `isPrivateApi`.
 
 Em Server Components ou Route Handlers, use as funcoes reutilizaveis:
 
