@@ -434,7 +434,7 @@ export default function ProvasPage() {
                 </div>
 
                 <Link
-                  href={`/confeccao?id=${assessment.id}`}
+                  href={`/confeccao/${assessment.id}`}
                   className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-[#1e3a8a] transition hover:border-blue-200 hover:bg-blue-50"
                 >
                   <Edit3 size={16} />
