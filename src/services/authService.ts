@@ -10,6 +10,16 @@ export type AuthenticatedUser = {
   username: string;
 };
 
+export type Classroom = {
+  code: string;
+  createdAt: string;
+  id: string;
+  name: string;
+  schoolYear: string;
+  teacherId: number;
+  updatedAt: string;
+};
+
 type ApiErrorResponse = {
   error?: string;
   message?: string;
@@ -69,6 +79,25 @@ export async function fetchAuthenticatedUser(): Promise<AuthenticatedUser> {
   }
 
   return data as AuthenticatedUser;
+}
+
+export async function fetchTeacherClassrooms(): Promise<Classroom[]> {
+  const response = await fetch("/api/turma/classrooms", {
+    headers: {
+      Accept: "application/json",
+    },
+  });
+  const data = await readJson<Classroom[] | ApiErrorResponse>(response);
+
+  if (!response.ok) {
+    const errorData = data as ApiErrorResponse;
+
+    throw new Error(
+      getErrorMessage(errorData, "Nao foi possivel listar as turmas."),
+    );
+  }
+
+  return Array.isArray(data) ? data : [];
 }
 
 export async function logout() {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AUTH_SESSION_COOKIE, verifySessionCookie } from "@/lib/auth/session";
 
-const privatePageRoutes = ["/dashboard", "/confeccao", "/provas"];
+const privatePageRoutes = ["/dashboard", "/classes", "/confeccao", "/provas"];
 
 function isPrivatePage(pathname: string) {
   return privatePageRoutes.some(
@@ -10,7 +10,7 @@ function isPrivatePage(pathname: string) {
 }
 
 function isPrivateApi(pathname: string) {
-  return pathname.startsWith("/api/ia/");
+  return pathname.startsWith("/api/ia/") || pathname.startsWith("/api/turma/");
 }
 
 export async function middleware(request: NextRequest) {
@@ -41,8 +41,10 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/dashboard/:path*",
+    "/classes/:path*",
     "/confeccao/:path*",
     "/provas/:path*",
     "/api/ia/:path*",
+    "/api/turma/:path*",
   ],
 };
