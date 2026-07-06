@@ -4,6 +4,14 @@ Frontend web do sistema Khora, desenvolvido com Next.js, React e TypeScript.
 
 O projeto possui uma tela de login integrada ao BFF, redirecionamento da raiz (`/`) para `/login` e uma tela temporaria de dashboard em `/dashboard`.
 
+## Apoio de IA na interface
+
+A construcao visual das telas e dos HTMLs de referencia contou com apoio de IA usando o Stitch, do Google:
+
+```text
+https://stitch.withgoogle.com/
+```
+
 ## Stack
 
 - Node.js 22
