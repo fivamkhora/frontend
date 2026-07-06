@@ -20,7 +20,7 @@ import {
   type ClassroomDetails,
   type ClassroomMemberPerson,
 } from "@/services/classroomService";
-import { ClassesLayout } from "./ClassesLayout";
+import { AppLayout } from "@/app/_components/AppLayout";
 
 function formatDate(value: string) {
   const date = new Date(value);
@@ -104,7 +104,7 @@ export function ClassDetailsPageContent({
   );
 
   return (
-    <ClassesLayout user={user}>
+    <AppLayout active="classes" user={user}>
       <section className="px-8 py-6">
         <Link
           href="/classes"
@@ -265,6 +265,6 @@ export function ClassDetailsPageContent({
           </div>
         )}
       </section>
-    </ClassesLayout>
+    </AppLayout>
   );
 }

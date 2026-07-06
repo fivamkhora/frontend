@@ -1,20 +1,18 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   BookOpen,
-  Brain,
   ClipboardList,
   FileText,
   LoaderCircle,
-  Menu,
   Printer,
   RotateCcw,
   Shuffle,
   Sparkles,
 } from "lucide-react";
+import { AppLayout } from "@/app/_components/AppLayout";
 
 type AssessmentResponse = {
   data: {
@@ -476,50 +474,8 @@ export function ConfeccaoProvasContent({
   };
 
   return (
-    <div className="min-h-screen bg-[#eef2f7] text-slate-900">
-      <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 md:px-8">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              aria-label="Abrir menu"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50"
-            >
-              <Menu size={20} />
-            </button>
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-2 text-lg font-bold text-[#1e3a8a]"
-            >
-              <Brain size={24} />
-              <span>Khora AI</span>
-            </Link>
-          </div>
-
-          <nav className="hidden items-center gap-1 text-sm font-medium text-slate-600 md:flex">
-            <Link
-              href="/dashboard"
-              className="rounded-lg px-4 py-2 hover:bg-slate-100 hover:text-slate-900"
-            >
-              Início
-            </Link>
-            <Link
-              href="/confeccao"
-              className="rounded-lg bg-[#1e3a8a] px-4 py-2 text-white shadow-sm"
-            >
-              Provas
-            </Link>
-            <Link
-              href="/provas"
-              className="rounded-lg px-4 py-2 hover:bg-slate-100 hover:text-slate-900"
-            >
-              Listagem de provas criadas
-            </Link>
-          </nav>
-        </div>
-      </header>
-
-      <main className="mx-auto grid max-w-7xl gap-6 px-4 py-6 md:grid-cols-[380px_1fr] md:px-8 md:py-8">
+    <AppLayout active="confeccao">
+      <section className="mx-auto grid max-w-7xl gap-6 px-4 py-6 md:grid-cols-[380px_1fr] md:px-8">
         {loadingAssessment && (
           <div className="rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm font-medium text-blue-900 md:col-span-2">
             Carregando avaliação para edição...
@@ -730,8 +686,8 @@ export function ConfeccaoProvasContent({
             />
           )}
         </section>
-      </main>
-    </div>
+      </section>
+    </AppLayout>
   );
 }
 
@@ -1000,3 +956,4 @@ function AnswersView({ answers }: { answers: NormalizedAnswer[] }) {
     </div>
   );
 }
+

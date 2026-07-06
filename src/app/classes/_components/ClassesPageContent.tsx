@@ -9,7 +9,7 @@ import {
   type AuthenticatedUser,
   type Classroom,
 } from "@/services/authService";
-import { ClassesLayout } from "./ClassesLayout";
+import { AppLayout } from "@/app/_components/AppLayout";
 
 type ClassItem = {
   code: string;
@@ -88,7 +88,7 @@ export function ClassesPageContent() {
   }, []);
 
   return (
-    <ClassesLayout user={user}>
+    <AppLayout active="classes" user={user}>
       <section className="px-8 py-6">
         <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-400">
           <span>Painel</span>
@@ -201,6 +201,6 @@ export function ClassesPageContent() {
           </p>
         </div>
       </section>
-    </ClassesLayout>
+    </AppLayout>
   );
 }
