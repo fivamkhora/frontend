@@ -22,7 +22,7 @@ import {
 type AppLayoutActiveItem =
   | "home"
   | "classes"
-  | "students"
+  | "secretaria"
   | "confeccao"
   | "provas";
 
@@ -40,7 +40,12 @@ const navItems: Array<{
 }> = [
   { href: "/dashboard", icon: Home, key: "home", label: "Home" },
   { href: "/classes", icon: GraduationCap, key: "classes", label: "Classes" },
-  { href: "/students", icon: Users, key: "students", label: "Students" },
+  {
+    href: "/secretaria",
+    icon: Users,
+    key: "secretaria",
+    label: "Secretaria",
+  },
   {
     href: "/confeccao",
     icon: FilePlus2,

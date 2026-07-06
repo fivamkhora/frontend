@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AUTH_SESSION_COOKIE, verifySessionCookie } from "@/lib/auth/session";
 
-const privatePageRoutes = ["/dashboard", "/classes", "/confeccao", "/provas"];
+const privatePageRoutes = [
+  "/dashboard",
+  "/classes",
+  "/secretaria",
+  "/confeccao",
+  "/provas",
+];
 
 function isPrivatePage(pathname: string) {
   return privatePageRoutes.some(
@@ -46,6 +52,7 @@ export const config = {
   matcher: [
     "/dashboard/:path*",
     "/classes/:path*",
+    "/secretaria/:path*",
     "/confeccao/:path*",
     "/provas/:path*",
     "/api/classrooms/:path*",
