@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { FilePlus2, Files, LayoutDashboard } from "lucide-react";
+import { FilePlus2, Files } from "lucide-react";
 import { AppLayout } from "@/app/_components/AppLayout";
 import { getCurrentDateLabel } from "@/services/date";
 import {
@@ -49,7 +49,7 @@ export default function TemporaryDashboardPage() {
           <p className="mt-1 text-sm text-slate-500">{currentDateLabel}</p>
         </div>
 
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
+        <div className="mt-8 grid gap-4 md:grid-cols-2">
           <Link
             href="/confeccao"
             className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
@@ -83,21 +83,6 @@ export default function TemporaryDashboardPage() {
               Visualizar, revisar e acompanhar provas ja criadas.
             </p>
           </Link>
-
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-blue-50 text-[#1e3a8a]">
-              <LayoutDashboard size={22} />
-            </div>
-
-            <h2 className="text-base font-semibold text-slate-900">
-              Dashboard Khora
-            </h2>
-
-            <p className="mt-2 text-sm text-slate-500">
-              Login realizado com sucesso. Area pronta para integracao com
-              turmas, alunos e relatorios.
-            </p>
-          </div>
         </div>
       </section>
     </AppLayout>
