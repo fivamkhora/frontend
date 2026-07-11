@@ -1,11 +1,79 @@
+"use client";
+
 import Link from "next/link";
-import { Eye, IdCard, Info, Lock, Save, ShieldCheck } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  IdCard,
+  Info,
+  Lock,
+  Save,
+  ShieldCheck,
+} from "lucide-react";
 import { AppLayout } from "@/app/_components/AppLayout";
+import { useState } from "react";
+import { createUser } from "@/services/authService";
 
 export default function NovoUsuarioPage() {
+  const [name, setName] = useState("");
+  const [cpf, setCpf] = useState("");
+  const [email, setEmail] = useState("");
+  const [dataNasc, setDataNasc] = useState("");
+  const [cargo, setCargo] = useState<
+    "Aluno" | "Professor" | "Admin" | "Secretaria"
+  >("Aluno");
+  const [username, setUsername] = useState("");
+  const [senha, setSenha] = useState("");
+  const [confirmarSenha, setConfirmarSenha] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!name || !cpf || !email || !dataNasc || !username || !senha) {
+      alert("Por favor, preencha todos os campos obrigatórios.");
+      return;
+    }
+
+    if (senha !== confirmarSenha) {
+      alert("As senhas não coincidem!");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      await createUser({
+        name,
+        cpf,
+        email,
+        birth: dataNasc,
+        role: cargo,
+        username,
+        password: senha,
+      });
+
+      alert("Usuário criado com sucesso!");
+
+      setName("");
+      setCpf("");
+      setEmail("");
+      setDataNasc("");
+      setCargo("Aluno");
+      setUsername("");
+      setSenha("");
+      setConfirmarSenha("");
+    } catch (error) {
+      console.error(error);
+      alert("Ocorreu um erro ao salvar o usuário.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <AppLayout active="secretaria">
-      <section className="p-8">
+      <form onSubmit={handleSave} className="p-8">
         <div className="mb-2 text-xs font-medium text-slate-400">
           Usuarios &gt; Adicionar Novo
         </div>
@@ -40,6 +108,8 @@ export default function NovoUsuarioPage() {
                   </label>
                   <input
                     type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     placeholder="Ex: Maria Oliveira Santos"
                     className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none transition focus:border-[#003b5c] focus:bg-white"
                   />
@@ -51,6 +121,8 @@ export default function NovoUsuarioPage() {
                   </label>
                   <input
                     type="text"
+                    value={cpf}
+                    onChange={(e) => setCpf(e.target.value)}
                     placeholder="000.000.000-00"
                     className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none transition focus:border-[#003b5c] focus:bg-white"
                   />
@@ -62,6 +134,8 @@ export default function NovoUsuarioPage() {
                   </label>
                   <input
                     type="date"
+                    value={dataNasc}
+                    onChange={(e) => setDataNasc(e.target.value)}
                     className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none transition focus:border-[#003b5c] focus:bg-white"
                   />
                 </div>
@@ -70,12 +144,15 @@ export default function NovoUsuarioPage() {
                   <label className="mb-1 block text-sm font-semibold text-slate-700">
                     Cargo / Papel
                   </label>
-                  <select className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none transition focus:border-[#003b5c] focus:bg-white">
-                    <option>Selecione um cargo</option>
-                    <option>Aluno</option>
-                    <option>Professor</option>
-                    <option>Secretaria</option>
-                    <option>Admin</option>
+                  <select
+                    value={cargo}
+                    onChange={(e) => setCargo(e.target.value as any)}
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none transition focus:border-[#003b5c] focus:bg-white"
+                  >
+                    <option value="Aluno">Aluno</option>
+                    <option value="Professor">Professor</option>
+                    <option value="Secretaria">Secretaria</option>
+                    <option value="Admin">Admin</option>
                   </select>
                 </div>
               </div>
@@ -117,6 +194,8 @@ export default function NovoUsuarioPage() {
                   </label>
                   <input
                     type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
                     placeholder="maria.oliveira"
                     className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none transition focus:border-[#003b5c] focus:bg-white"
                   />
@@ -128,6 +207,8 @@ export default function NovoUsuarioPage() {
                   </label>
                   <input
                     type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     placeholder="maria@example.com"
                     className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none transition focus:border-[#003b5c] focus:bg-white"
                   />
@@ -140,15 +221,20 @@ export default function NovoUsuarioPage() {
 
                   <div className="relative">
                     <input
-                      type="password"
+                      type={showPassword ? "text" : "password"}
+                      value={senha}
+                      onChange={(e) => setSenha(e.target.value)}
                       placeholder="********"
                       className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 pr-10 text-sm outline-none transition focus:border-[#003b5c] focus:bg-white"
                     />
 
-                    <Eye
-                      size={16}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
-                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
                   </div>
                 </div>
 
@@ -158,6 +244,8 @@ export default function NovoUsuarioPage() {
                   </label>
                   <input
                     type="password"
+                    value={confirmarSenha}
+                    onChange={(e) => setConfirmarSenha(e.target.value)}
                     placeholder="********"
                     className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none transition focus:border-[#003b5c] focus:bg-white"
                   />
@@ -166,7 +254,7 @@ export default function NovoUsuarioPage() {
             </div>
 
             <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-              <div className="h-40 bg-gradient-to-br from-[#003b5c] to-[#1e90ff]" />
+              <div className="h-40 bg-linear-to-br from-[#003b5c] to-[#1e90ff]" />
 
               <div className="p-5">
                 <div className="mb-3 flex items-center gap-2">
@@ -175,8 +263,8 @@ export default function NovoUsuarioPage() {
                 </div>
 
                 <p className="text-sm text-slate-500">
-                  Gestao segura de identidade e acesso para usuarios do
-                  ambiente escolar.
+                  Gestao segura de identidade e acesso para usuarios do ambiente
+                  escolar.
                 </p>
               </div>
             </div>
@@ -189,14 +277,18 @@ export default function NovoUsuarioPage() {
                 Cancelar
               </Link>
 
-              <button className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#003b5c] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#062f46]">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#003b5c] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#062f46] disabled:bg-slate-400"
+              >
                 <Save size={16} />
-                Salvar Usuario
+                {isLoading ? "Salvando..." : "Salvar Usuario"}
               </button>
             </div>
           </aside>
         </div>
-      </section>
+      </form>
     </AppLayout>
   );
 }

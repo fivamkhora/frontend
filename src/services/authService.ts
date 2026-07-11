@@ -25,6 +25,16 @@ type ApiErrorResponse = {
   message?: string;
 };
 
+type CreateUser = {
+  username: string;
+  password: string;
+  role: string;
+  name: string;
+  email: string;
+  cpf: string;
+  birth: string;
+};
+
 async function readJson<T>(response: Response) {
   return (await response.json()) as T;
 }
@@ -104,4 +114,26 @@ export async function logout() {
   await fetch("/api/auth/logout", {
     method: "POST",
   });
+}
+
+export async function createUser(data: CreateUser) {
+  const response = await fetch("/api/secretaria/usuario", {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  const result = await response.json();
+
+  console.log("STATUS:", response.status);
+  console.log("RESULT:", result);
+
+  if (!response.ok) {
+    throw new Error(result.error ?? "Erro ao criar usuário");
+  }
+
+  return result;
 }
