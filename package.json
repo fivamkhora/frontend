@@ -12,6 +12,7 @@
     "test:vercel": "npm run lint && npm run typecheck && npm test && npm run build"
   },
   "dependencies": {
+    "clsx": "^2.1.1",
     "lucide-react": "^1.18.0",
     "next": "15.5.19",
     "react": "19.1.0",
