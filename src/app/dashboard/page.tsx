@@ -46,6 +46,9 @@ export default function TemporaryDashboardPage() {
             <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
               Bem-vindo de volta, {user?.name || "Professor"}.
             </h1>
+            <p className="mt-1 text-sm text-blue-100">
+              {currentDateLabel}
+            </p>
             <p className="mt-2 text-sm text-blue-100 md:text-base leading-relaxed">
               Sua jornada de ensino facilitada pela inteligência artificial.
               Transforme horas de trabalho em minutos de criatividade.

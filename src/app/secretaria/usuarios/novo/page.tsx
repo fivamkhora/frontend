@@ -14,14 +14,14 @@ import { AppLayout } from "@/app/_components/AppLayout";
 import { useState } from "react";
 import { createUser } from "@/services/authService";
 
+type UserRole = "Aluno" | "Professor" | "Admin" | "Secretaria";
+
 export default function NovoUsuarioPage() {
   const [name, setName] = useState("");
   const [cpf, setCpf] = useState("");
   const [email, setEmail] = useState("");
   const [dataNasc, setDataNasc] = useState("");
-  const [cargo, setCargo] = useState<
-    "Aluno" | "Professor" | "Admin" | "Secretaria"
-  >("Aluno");
+  const [cargo, setCargo] = useState<UserRole>("Aluno");
   const [username, setUsername] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
@@ -146,7 +146,7 @@ export default function NovoUsuarioPage() {
                   </label>
                   <select
                     value={cargo}
-                    onChange={(e) => setCargo(e.target.value as any)}
+                    onChange={(e) => setCargo(e.target.value as UserRole)}
                     className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none transition focus:border-[#003b5c] focus:bg-white"
                   >
                     <option value="Aluno">Aluno</option>

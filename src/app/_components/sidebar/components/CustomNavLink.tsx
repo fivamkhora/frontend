@@ -11,6 +11,7 @@ type CustomNavLinkProps = {
   onClick?: () => void;
   matchPaths?: string[];
   className?: string;
+  isActive?: boolean;
 };
 
 export const CustomNavLink = ({
@@ -20,11 +21,13 @@ export const CustomNavLink = ({
   onClick,
   matchPaths = [],
   className,
+  isActive: explicitIsActive,
 }: CustomNavLinkProps) => {
   const pathname = usePathname();
 
   const isActive =
-    pathname === href || matchPaths.some((path) => pathname.startsWith(path));
+    explicitIsActive ??
+    (pathname === href || matchPaths.some((path) => pathname.startsWith(path)));
 
   const baseClass =
     "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors cursor-pointer";

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   GraduationCap,
@@ -81,6 +80,7 @@ export default function Sidebar({ active }: SidebarProps) {
               key={item.key}
               href={item.href}
               icon={<Icon size={18} />}
+              isActive={active === item.key}
             >
               {item.label}
             </CustomNavLink>
