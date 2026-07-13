@@ -188,18 +188,6 @@ export function ClassesPageContent() {
           </div>
         )}
 
-        <div className="mt-8 rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center">
-          <BookOpen className="mx-auto mb-3 text-slate-400" size={28} />
-
-          <h3 className="text-sm font-bold text-slate-700">
-            Integracao com turmas
-          </h3>
-
-          <p className="mt-1 text-sm text-slate-500">
-            Esta pagina esta pronta para receber dados do BFF, como turmas
-            vinculadas ao professor autenticado.
-          </p>
-        </div>
       </section>
     </AppLayout>
   );
