@@ -32,10 +32,10 @@ const secretariaCards = [
     title: "Usuarios",
   },
   {
-    description: "Organizar turmas e vinculos academicos.",
-    href: "/secretaria/turmas",
+    description: "Cadastrar uma turma e atribuir professores responsaveis.",
+    href: "/secretaria/classes",
     icon: UserPlus,
-    title: "Turmas",
+    title: "Criar classes",
   },
   {
     description: "Acompanhar indicadores administrativos e escolares.",
