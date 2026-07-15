@@ -1,28 +1,27 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
-import {
-  CheckCircle2,
-  Info,
-  PlusCircle,
-  UserPlus,
-  Users,
-  XCircle,
-} from "lucide-react";
+import { useEffect, useState, type FormEvent } from "react";
+import { CheckCircle2, Info, PlusCircle, XCircle } from "lucide-react";
 import { AppLayout } from "@/app/_components/AppLayout";
 import {
+  addClassroomStudent,
+  addClassroomTeacher,
   fetchProfessors,
-  type Professor,
+  fetchStudents,
+  removeClassroomStudent,
+  removeClassroomTeacher,
+  type DirectoryUser,
 } from "@/services/secretariaService";
-
-type Teacher = Professor & {
-  initials: string;
-};
+import {
+  AssignmentSection,
+  type AssignmentUser,
+} from "./_components/AssignmentSection";
 
 type ApiErrorResponse = {
+  data?: unknown;
   error?: string;
+  id?: unknown;
   upstreamResponse?: {
     error?: string;
     message?: string;
@@ -47,28 +46,55 @@ function getInitials(name: string) {
     .join("");
 }
 
-function toTeacher(professor: Professor): Teacher {
+function toAssignmentUser(user: DirectoryUser): AssignmentUser {
   return {
-    ...professor,
-    initials: getInitials(professor.name) || "PR",
+    ...user,
+    initials: getInitials(user.name) || "US",
   };
 }
 
+function getCreatedClassroomId(data: ApiErrorResponse) {
+  if (typeof data.id === "string" && data.id.trim()) {
+    return data.id;
+  }
+
+  if (data.data && typeof data.data === "object") {
+    const wrappedData = data.data as { id?: unknown };
+
+    if (typeof wrappedData.id === "string" && wrappedData.id.trim()) {
+      return wrappedData.id;
+    }
+  }
+
+  return null;
+}
+
 export default function SecretariaClassesConfiguracaoPage() {
-  const router = useRouter();
   const [name, setName] = useState("");
   const [schoolYear, setSchoolYear] = useState("2026");
-  const [availableTeachers, setAvailableTeachers] = useState<Teacher[]>([]);
-  const [selectedTeachers, setSelectedTeachers] = useState<Teacher[]>([]);
+  const [classroomId, setClassroomId] = useState<string | null>(null);
+  const [availableTeachers, setAvailableTeachers] = useState<AssignmentUser[]>(
+    [],
+  );
+  const [selectedTeachers, setSelectedTeachers] = useState<AssignmentUser[]>(
+    [],
+  );
   const [loadingTeachers, setLoadingTeachers] = useState(true);
   const [teachersError, setTeachersError] = useState("");
+  const [teacherActionId, setTeacherActionId] = useState<number | null>(null);
+  const [teacherAssignmentError, setTeacherAssignmentError] = useState("");
+  const [availableStudents, setAvailableStudents] = useState<AssignmentUser[]>(
+    [],
+  );
+  const [selectedStudents, setSelectedStudents] = useState<AssignmentUser[]>(
+    [],
+  );
+  const [loadingStudents, setLoadingStudents] = useState(true);
+  const [studentsError, setStudentsError] = useState("");
+  const [studentActionId, setStudentActionId] = useState<number | null>(null);
+  const [studentAssignmentError, setStudentAssignmentError] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  const selectedTeacherIds = useMemo(
-    () => selectedTeachers.map((teacher) => teacher.id),
-    [selectedTeachers],
-  );
 
   useEffect(() => {
     let active = true;
@@ -78,7 +104,7 @@ export default function SecretariaClassesConfiguracaoPage() {
         const professors = await fetchProfessors();
 
         if (active) {
-          setAvailableTeachers(professors.map(toTeacher));
+          setAvailableTeachers(professors.map(toAssignmentUser));
         }
       } catch (loadError) {
         if (active) {
@@ -95,38 +121,150 @@ export default function SecretariaClassesConfiguracaoPage() {
       }
     }
 
+    async function loadStudents() {
+      try {
+        const students = await fetchStudents();
+
+        if (active) {
+          setAvailableStudents(students.map(toAssignmentUser));
+        }
+      } catch (loadError) {
+        if (active) {
+          setStudentsError(
+            loadError instanceof Error
+              ? loadError.message
+              : "Nao foi possivel carregar os alunos.",
+          );
+        }
+      } finally {
+        if (active) {
+          setLoadingStudents(false);
+        }
+      }
+    }
+
     loadProfessors();
+    loadStudents();
 
     return () => {
       active = false;
     };
   }, []);
 
-  function handleAddTeacher(teacher: Teacher) {
-    setSelectedTeachers((current) =>
-      current.some((item) => item.id === teacher.id)
-        ? current
-        : [...current, teacher],
-    );
+  async function handleAddTeacher(teacher: AssignmentUser) {
+    if (!classroomId) {
+      setTeacherAssignmentError(
+        "Crie a turma antes de adicionar professores.",
+      );
+      return;
+    }
+
+    setTeacherAssignmentError("");
+    setTeacherActionId(teacher.id);
+
+    try {
+      await addClassroomTeacher(classroomId, teacher.id);
+      setSelectedTeachers((current) =>
+        current.some((item) => item.id === teacher.id)
+          ? current
+          : [...current, teacher],
+      );
+    } catch (actionError) {
+      setTeacherAssignmentError(
+        actionError instanceof Error
+          ? actionError.message
+          : "Nao foi possivel adicionar o professor.",
+      );
+    } finally {
+      setTeacherActionId(null);
+    }
   }
 
-  function handleRemoveTeacher(teacherId: number) {
-    setSelectedTeachers((current) =>
-      current.filter((teacher) => teacher.id !== teacherId),
-    );
+  async function handleRemoveTeacher(teacherId: number) {
+    if (!classroomId) {
+      return;
+    }
+
+    setTeacherAssignmentError("");
+    setTeacherActionId(teacherId);
+
+    try {
+      await removeClassroomTeacher(classroomId, teacherId);
+      setSelectedTeachers((current) =>
+        current.filter((teacher) => teacher.id !== teacherId),
+      );
+    } catch (actionError) {
+      setTeacherAssignmentError(
+        actionError instanceof Error
+          ? actionError.message
+          : "Nao foi possivel remover o professor.",
+      );
+    } finally {
+      setTeacherActionId(null);
+    }
+  }
+
+  async function handleAddStudent(student: AssignmentUser) {
+    if (!classroomId) {
+      setStudentAssignmentError("Crie a turma antes de adicionar alunos.");
+      return;
+    }
+
+    setStudentAssignmentError("");
+    setStudentActionId(student.id);
+
+    try {
+      await addClassroomStudent(classroomId, student.id);
+      setSelectedStudents((current) =>
+        current.some((item) => item.id === student.id)
+          ? current
+          : [...current, student],
+      );
+    } catch (actionError) {
+      setStudentAssignmentError(
+        actionError instanceof Error
+          ? actionError.message
+          : "Nao foi possivel adicionar o aluno.",
+      );
+    } finally {
+      setStudentActionId(null);
+    }
+  }
+
+  async function handleRemoveStudent(studentId: number) {
+    if (!classroomId) {
+      return;
+    }
+
+    setStudentAssignmentError("");
+    setStudentActionId(studentId);
+
+    try {
+      await removeClassroomStudent(classroomId, studentId);
+      setSelectedStudents((current) =>
+        current.filter((student) => student.id !== studentId),
+      );
+    } catch (actionError) {
+      setStudentAssignmentError(
+        actionError instanceof Error
+          ? actionError.message
+          : "Nao foi possivel remover o aluno.",
+      );
+    } finally {
+      setStudentActionId(null);
+    }
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
 
-    if (!name.trim()) {
-      setError("Informe o nome da turma.");
+    if (classroomId) {
       return;
     }
 
-    if (selectedTeacherIds.length === 0) {
-      setError("Selecione ao menos um professor responsavel.");
+    if (!name.trim()) {
+      setError("Informe o nome da turma.");
       return;
     }
 
@@ -142,7 +280,6 @@ export default function SecretariaClassesConfiguracaoPage() {
         body: JSON.stringify({
           name: name.trim(),
           schoolYear,
-          teacherIds: selectedTeacherIds,
         }),
       });
       const data = (await response.json()) as ApiErrorResponse;
@@ -151,8 +288,13 @@ export default function SecretariaClassesConfiguracaoPage() {
         throw new Error(getErrorMessage(data));
       }
 
-      router.push("/secretaria/classes");
-      router.refresh();
+      const createdClassroomId = getCreatedClassroomId(data);
+
+      if (!createdClassroomId) {
+        throw new Error("A turma foi criada, mas o BFF nao retornou o ID.");
+      }
+
+      setClassroomId(createdClassroomId);
     } catch (submitError) {
       setError(
         submitError instanceof Error
@@ -173,7 +315,7 @@ export default function SecretariaClassesConfiguracaoPage() {
           </div>
           <h1 className="text-3xl font-bold text-[#003b5c]">Nova Turma</h1>
           <p className="mt-1 text-sm text-slate-500">
-            Preencha as informacoes e atribua os professores responsaveis.
+            Preencha as informacoes e vincule professores e alunos.
           </p>
         </div>
 
@@ -206,6 +348,7 @@ export default function SecretariaClassesConfiguracaoPage() {
                     placeholder="Ex: Turma 1A"
                     maxLength={100}
                     required
+                    disabled={loading || classroomId !== null}
                     className="h-12 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition focus:border-[#003b5c] focus:bg-white"
                   />
                   <p className="mt-2 text-xs text-slate-500">
@@ -224,6 +367,7 @@ export default function SecretariaClassesConfiguracaoPage() {
                     id="school-year"
                     value={schoolYear}
                     onChange={(event) => setSchoolYear(event.target.value)}
+                    disabled={loading || classroomId !== null}
                     className="h-12 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition focus:border-[#003b5c] focus:bg-white"
                   >
                     <option value="2026">2026</option>
@@ -234,152 +378,91 @@ export default function SecretariaClassesConfiguracaoPage() {
               </div>
             </section>
 
-            <section>
-              <div className="mb-4 flex items-center justify-between gap-3 border-b border-slate-200 pb-3">
-                <div className="flex items-center gap-2">
-                  <Users size={18} className="text-[#003b5c]" />
-                  <h2 className="text-lg font-bold text-slate-800">
-                    Atribuicao
-                  </h2>
-                </div>
-                <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-[#003b5c]">
-                  Selecionados: {selectedTeachers.length}
-                </span>
-              </div>
-
-              <p className="mb-4 text-sm font-semibold text-slate-700">
-                Selecione um ou mais professores para esta turma:
-              </p>
-
-              {loadingTeachers && (
-                <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 text-center text-sm font-medium text-slate-500">
-                  Carregando professores...
-                </div>
-              )}
-
-              {!loadingTeachers && teachersError && (
-                <div
-                  role="alert"
-                  className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700"
-                >
-                  {teachersError}
-                </div>
-              )}
-
-              {!loadingTeachers &&
-                !teachersError &&
-                availableTeachers.length === 0 && (
-                  <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-500">
-                    Nenhum professor cadastrado foi encontrado.
+            <div className="mb-8 flex flex-col gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                {classroomId ? (
+                  <div className="flex items-start gap-2 text-sm font-semibold text-emerald-700">
+                    <CheckCircle2 className="mt-0.5 shrink-0" size={17} />
+                    <span>
+                      Turma criada com sucesso. Agora adicione professores e
+                      alunos.
+                    </span>
                   </div>
+                ) : (
+                  <p className="text-sm text-slate-600">
+                    Crie a turma para liberar as atribuicoes de usuarios.
+                  </p>
                 )}
 
-              {!loadingTeachers && availableTeachers.length > 0 && (
-                <div className="grid gap-4 md:grid-cols-2">
-                  {availableTeachers.map((teacher) => {
-                    const selected = selectedTeacherIds.includes(teacher.id);
+                {error && (
+                  <p role="alert" className="mt-2 text-sm font-medium text-red-700">
+                    {error}
+                  </p>
+                )}
+              </div>
 
-                    return (
-                      <article
-                        key={teacher.id}
-                        className={`flex min-h-20 items-center justify-between gap-3 rounded-lg border p-4 transition ${
-                          selected
-                            ? "border-blue-200 bg-blue-50"
-                            : "border-slate-200 bg-slate-50 hover:bg-white"
-                        }`}
-                      >
-                        <div className="flex min-w-0 items-center gap-3">
-                          <div
-                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                              selected
-                                ? "bg-blue-200 text-[#003b5c]"
-                                : "bg-emerald-100 text-emerald-700"
-                            }`}
-                          >
-                            {teacher.initials}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-bold text-slate-900">
-                              {teacher.name}
-                            </p>
-                            <p className="truncate text-xs text-slate-500">
-                              {teacher.email || teacher.username}
-                            </p>
-                          </div>
-                        </div>
-
-                        {selected ? (
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveTeacher(teacher.id)}
-                            className="shrink-0 rounded-md border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50"
-                          >
-                            Remover
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => handleAddTeacher(teacher)}
-                            className="inline-flex shrink-0 items-center gap-1 rounded-md border border-[#003b5c] bg-white px-3 py-1.5 text-xs font-semibold text-[#003b5c] transition hover:bg-blue-50"
-                          >
-                            <UserPlus size={13} />
-                            Adicionar
-                          </button>
-                        )}
-                      </article>
-                    );
-                  })}
-                </div>
-              )}
-
-              {selectedTeachers.length > 0 && (
-                <div className="mt-5 rounded-lg border border-blue-100 bg-blue-50 p-4">
-                  <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[#003b5c]">
-                    <CheckCircle2 size={17} />
-                    Professores selecionados
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedTeachers.map((teacher) => (
-                      <span
-                        key={teacher.id}
-                        className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm"
-                      >
-                        {teacher.name}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {error && (
-                <div
-                  role="alert"
-                  className="mt-5 rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700"
+              <div className="flex flex-col-reverse gap-3 sm:flex-row">
+                <Link
+                  href="/secretaria/classes"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#003b5c] bg-white px-5 py-2.5 text-sm font-semibold text-[#003b5c] transition hover:bg-blue-50"
                 >
-                  {error}
-                </div>
-              )}
-            </section>
-          </div>
+                  <XCircle size={16} />
+                  Cancelar
+                </Link>
+                <button
+                  type="submit"
+                  disabled={loading || classroomId !== null}
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#003b5c] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#062f46] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {classroomId ? (
+                    <CheckCircle2 size={16} />
+                  ) : (
+                    <PlusCircle size={16} />
+                  )}
+                  {loading
+                    ? "Criando..."
+                    : classroomId
+                      ? "Turma criada"
+                      : "Criar Turma"}
+                </button>
+              </div>
+            </div>
 
-          <div className="flex flex-col-reverse items-stretch justify-end gap-3 border-t border-slate-200 bg-slate-50 px-6 py-5 sm:flex-row sm:items-center sm:px-8">
-            <Link
-              href="/secretaria/classes"
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#003b5c] bg-white px-5 py-2.5 text-sm font-semibold text-[#003b5c] transition hover:bg-blue-50"
-            >
-              <XCircle size={16} />
-              Cancelar
-            </Link>
-            <button
-              type="submit"
-              disabled={
-                loading || loadingTeachers || availableTeachers.length === 0
-              }
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#003b5c] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#062f46] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <PlusCircle size={16} />
-              {loading ? "Criando..." : "Criar Turma"}
-            </button>
+            <AssignmentSection
+              actionUserId={teacherActionId}
+              assignmentError={teacherAssignmentError}
+              availableUsers={availableTeachers}
+              classroomReady={classroomId !== null}
+              description="Selecione um ou mais professores para esta turma:"
+              emptyMessage="Nenhum professor cadastrado foi encontrado."
+              loadError={teachersError}
+              loading={loadingTeachers}
+              loadingMessage="Carregando professores..."
+              onAdd={handleAddTeacher}
+              onRemove={handleRemoveTeacher}
+              selectedLabel="Professores vinculados"
+              selectedUsers={selectedTeachers}
+              title="Atribuicao de professores"
+            />
+
+            <div className="my-8 border-t border-slate-200" />
+
+            <AssignmentSection
+              actionUserId={studentActionId}
+              assignmentError={studentAssignmentError}
+              availableUsers={availableStudents}
+              classroomReady={classroomId !== null}
+              description="Selecione um ou mais alunos para esta turma:"
+              emptyMessage="Nenhum aluno cadastrado foi encontrado."
+              loadError={studentsError}
+              loading={loadingStudents}
+              loadingMessage="Carregando alunos..."
+              onAdd={handleAddStudent}
+              onRemove={handleRemoveStudent}
+              selectedLabel="Alunos vinculados"
+              selectedUsers={selectedStudents}
+              title="Atribuicao de alunos"
+            />
           </div>
         </form>
       </section>

@@ -10,7 +10,7 @@ type BffRequestOptions = {
   authToken?: string;
   body?: unknown;
   errorMessage: string;
-  method: "GET" | "POST";
+  method: "DELETE" | "GET" | "POST";
   path: string;
 };
 
@@ -67,6 +67,10 @@ export async function proxyBffJson({
         },
         { status: response.status === 404 ? 502 : response.status },
       );
+    }
+
+    if (response.status === 204) {
+      return new NextResponse(null, { status: 204 });
     }
 
     return NextResponse.json(data, { status: response.status });

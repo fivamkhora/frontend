@@ -16,13 +16,11 @@ type AuthenticatedUser = {
 type CreateClassroomPayload = {
   name?: unknown;
   schoolYear?: unknown;
-  teacherIds?: unknown;
 };
 
 type ValidCreateClassroomPayload = {
   name: string;
   schoolYear: string;
-  teacherIds: number[];
 };
 
 function isCreateClassroomPayload(
@@ -38,12 +36,7 @@ function isCreateClassroomPayload(
     typeof payload.name === "string" &&
     payload.name.trim().length > 0 &&
     typeof payload.schoolYear === "string" &&
-    /^\d{4}$/.test(payload.schoolYear) &&
-    Array.isArray(payload.teacherIds) &&
-    payload.teacherIds.length > 0 &&
-    payload.teacherIds.every(
-      (teacherId) => Number.isInteger(teacherId) && teacherId > 0,
-    )
+    /^\d{4}$/.test(payload.schoolYear)
   );
 }
 
@@ -121,7 +114,6 @@ export async function POST(request: Request) {
     body: {
       name: payload.name.trim(),
       schoolYear: payload.schoolYear,
-      teacherIds: payload.teacherIds,
     },
     errorMessage: "Erro ao criar turma no BFF.",
     method: "POST",
