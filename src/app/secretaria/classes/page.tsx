@@ -1,315 +1,229 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import {
-  CheckCircle2,
-  Info,
+  BookOpen,
+  CalendarDays,
+  Eye,
   PlusCircle,
-  UserPlus,
-  Users,
-  XCircle,
+  Search,
 } from "lucide-react";
 import { AppLayout } from "@/app/_components/AppLayout";
+import {
+  fetchSecretariaClassrooms,
+  type SecretariaClassroom,
+} from "@/services/secretariaService";
 
-type Teacher = {
-  id: number;
-  initials: string;
-  name: string;
-  subject: string;
+type SortMode = "name" | "recent";
+
+type ClassItem = SecretariaClassroom & {
+  color: "blue" | "green" | "lightBlue";
 };
 
-type ApiErrorResponse = {
-  error?: string;
-  upstreamResponse?: {
-    error?: string;
-    message?: string;
+function getClassColor(index: number): ClassItem["color"] {
+  const colors: ClassItem["color"][] = ["blue", "lightBlue", "green"];
+
+  return colors[index % colors.length] ?? "blue";
+}
+
+function getCardHeaderClass(color: ClassItem["color"]) {
+  const colors = {
+    blue: "bg-[#0f4c81] text-white",
+    green: "bg-[#064e3b] text-white",
+    lightBlue: "bg-[#dbeafe] text-[#1e3a8a]",
   };
-};
 
-const availableTeachers: Teacher[] = [
-  { id: 1, initials: "MA", name: "Maria Aparecida", subject: "Matematica" },
-  { id: 2, initials: "JS", name: "Joao Santos", subject: "Portugues" },
-  { id: 3, initials: "RL", name: "Ricardo Lima", subject: "Historia" },
-  { id: 4, initials: "AF", name: "Ana Ferreira", subject: "Geografia" },
-];
+  return colors[color];
+}
 
-function getErrorMessage(data: ApiErrorResponse) {
-  return (
-    data.upstreamResponse?.message ||
-    data.upstreamResponse?.error ||
-    data.error ||
-    "Nao foi possivel criar a turma."
-  );
+function compareRecent(a: ClassItem, b: ClassItem) {
+  const aDate = new Date(a.createdAt).getTime();
+  const bDate = new Date(b.createdAt).getTime();
+
+  return (Number.isNaN(bDate) ? 0 : bDate) - (Number.isNaN(aDate) ? 0 : aDate);
 }
 
 export default function SecretariaClassesPage() {
-  const router = useRouter();
-  const [name, setName] = useState("");
-  const [schoolYear, setSchoolYear] = useState("2026");
-  const [selectedTeachers, setSelectedTeachers] = useState<Teacher[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [classes, setClasses] = useState<ClassItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
+  const [sortMode, setSortMode] = useState<SortMode>("recent");
 
-  const selectedTeacherIds = useMemo(
-    () => selectedTeachers.map((teacher) => teacher.id),
-    [selectedTeachers],
-  );
+  useEffect(() => {
+    let active = true;
 
-  function handleAddTeacher(teacher: Teacher) {
-    setSelectedTeachers((current) =>
-      current.some((item) => item.id === teacher.id)
-        ? current
-        : [...current, teacher],
-    );
-  }
+    async function loadClassrooms() {
+      try {
+        const classrooms = await fetchSecretariaClassrooms();
 
-  function handleRemoveTeacher(teacherId: number) {
-    setSelectedTeachers((current) =>
-      current.filter((teacher) => teacher.id !== teacherId),
-    );
-  }
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError("");
-
-    if (!name.trim()) {
-      setError("Informe o nome da turma.");
-      return;
-    }
-
-    if (selectedTeacherIds.length === 0) {
-      setError("Selecione ao menos um professor responsavel.");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const response = await fetch("/api/turma/classrooms", {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: name.trim(),
-          schoolYear,
-          teacherIds: selectedTeacherIds,
-        }),
-      });
-      const data = (await response.json()) as ApiErrorResponse;
-
-      if (!response.ok) {
-        throw new Error(getErrorMessage(data));
+        if (active) {
+          setClasses(
+            classrooms.map((classroom, index) => ({
+              ...classroom,
+              color: getClassColor(index),
+            })),
+          );
+        }
+      } catch (loadError) {
+        if (active) {
+          setError(
+            loadError instanceof Error
+              ? loadError.message
+              : "Nao foi possivel carregar as turmas.",
+          );
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
       }
-
-      router.push("/classes");
-      router.refresh();
-    } catch (submitError) {
-      setError(
-        submitError instanceof Error
-          ? submitError.message
-          : "Nao foi possivel criar a turma.",
-      );
-    } finally {
-      setLoading(false);
     }
-  }
+
+    loadClassrooms();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const visibleClasses = useMemo(() => {
+    const normalizedSearch = search.trim().toLocaleLowerCase("pt-BR");
+    const filtered = normalizedSearch
+      ? classes.filter((classroom) =>
+          [classroom.name, classroom.code, classroom.schoolYear].some((value) =>
+            value.toLocaleLowerCase("pt-BR").includes(normalizedSearch),
+          ),
+        )
+      : [...classes];
+
+    return filtered.sort((a, b) =>
+      sortMode === "name"
+        ? a.name.localeCompare(b.name, "pt-BR")
+        : compareRecent(a, b),
+    );
+  }, [classes, search, sortMode]);
 
   return (
     <AppLayout active="secretaria">
-      <section className="mx-auto max-w-4xl px-6 py-8">
-        <div className="mb-6">
-          <div className="mb-1 text-xs font-medium text-slate-400">
-            Secretaria &gt; Classes &gt; Nova turma
-          </div>
-          <h1 className="text-3xl font-bold text-[#003b5c]">Nova Turma</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Preencha as informacoes e atribua os professores responsaveis.
-          </p>
+      <section className="px-8 py-6">
+        <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-400">
+          <span>Secretaria</span>
+          <span>&gt;</span>
+          <span className="text-[#1e3a8a]">Classes</span>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
-        >
-          <div className="p-6 sm:p-8">
-            <section className="mb-8">
-              <div className="mb-4 flex items-center gap-2 border-b border-slate-200 pb-3">
-                <Info size={18} className="text-[#003b5c]" />
-                <h2 className="text-lg font-bold text-slate-800">
-                  Informacoes Basicas
-                </h2>
-              </div>
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-[#0f3b63]">Turmas</h1>
+            <p className="mt-1 text-sm text-slate-500">
+              Consulte as turmas cadastradas e seus vinculos academicos.
+            </p>
+          </div>
 
-              <div className="grid gap-5 md:grid-cols-2">
-                <div>
-                  <label
-                    htmlFor="class-name"
-                    className="mb-2 block text-sm font-semibold text-slate-700"
-                  >
-                    Nome da Turma
-                  </label>
-                  <input
-                    id="class-name"
-                    type="text"
-                    value={name}
-                    onChange={(event) => setName(event.target.value)}
-                    placeholder="Ex: Turma 1A"
-                    maxLength={100}
-                    required
-                    className="h-12 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition focus:border-[#003b5c] focus:bg-white"
-                  />
-                  <p className="mt-2 text-xs text-slate-500">
-                    Identificacao usada por professores e alunos.
+          <Link
+            href="/secretaria/classes/configuracao"
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#003b5c] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#062f46]"
+          >
+            <PlusCircle size={17} />
+            Criar nova turma
+          </Link>
+        </div>
+
+        <div className="mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <label className="relative block">
+              <Search
+                size={16}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              />
+              <input
+                type="search"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Pesquisar turmas"
+                className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 pl-9 pr-4 text-sm outline-none transition focus:border-[#1e3a8a] focus:bg-white sm:w-80"
+              />
+            </label>
+
+            <select
+              value={sortMode}
+              onChange={(event) => setSortMode(event.target.value as SortMode)}
+              aria-label="Ordenar turmas"
+              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-600 outline-none focus:border-[#1e3a8a]"
+            >
+              <option value="recent">Ordenar por: Recentes</option>
+              <option value="name">Ordenar por: Nome</option>
+            </select>
+          </div>
+        </div>
+
+        {error && (
+          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700">
+            {error}
+          </div>
+        )}
+
+        {loading && (
+          <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-sm font-medium text-slate-500">
+            Carregando turmas...
+          </div>
+        )}
+
+        {!loading && !error && visibleClasses.length > 0 && (
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {visibleClasses.map((item) => (
+              <article
+                key={item.id}
+                className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+              >
+                <div className={`p-5 ${getCardHeaderClass(item.color)}`}>
+                  <span className="inline-flex rounded-md bg-white/20 px-2 py-1 text-[10px] font-bold uppercase tracking-wide">
+                    Turma
+                  </span>
+                  <h2 className="mt-4 text-2xl font-bold">{item.name}</h2>
+                  <p className="mt-1 text-sm opacity-90">
+                    {item.code || "Codigo nao informado"}
                   </p>
                 </div>
 
-                <div>
-                  <label
-                    htmlFor="school-year"
-                    className="mb-2 block text-sm font-semibold text-slate-700"
-                  >
-                    Ano Letivo
-                  </label>
-                  <select
-                    id="school-year"
-                    value={schoolYear}
-                    onChange={(event) => setSchoolYear(event.target.value)}
-                    className="h-12 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition focus:border-[#003b5c] focus:bg-white"
-                  >
-                    <option value="2026">2026</option>
-                    <option value="2025">2025</option>
-                    <option value="2024">2024</option>
-                  </select>
-                </div>
-              </div>
-            </section>
-
-            <section>
-              <div className="mb-4 flex items-center justify-between gap-3 border-b border-slate-200 pb-3">
-                <div className="flex items-center gap-2">
-                  <Users size={18} className="text-[#003b5c]" />
-                  <h2 className="text-lg font-bold text-slate-800">
-                    Atribuicao
-                  </h2>
-                </div>
-                <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-[#003b5c]">
-                  Selecionados: {selectedTeachers.length}
-                </span>
-              </div>
-
-              <p className="mb-4 text-sm font-semibold text-slate-700">
-                Selecione um ou mais professores para esta turma:
-              </p>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                {availableTeachers.map((teacher) => {
-                  const selected = selectedTeacherIds.includes(teacher.id);
-
-                  return (
-                    <article
-                      key={teacher.id}
-                      className={`flex min-h-20 items-center justify-between gap-3 rounded-lg border p-4 transition ${
-                        selected
-                          ? "border-blue-200 bg-blue-50"
-                          : "border-slate-200 bg-slate-50 hover:bg-white"
-                      }`}
-                    >
-                      <div className="flex min-w-0 items-center gap-3">
-                        <div
-                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                            selected
-                              ? "bg-blue-200 text-[#003b5c]"
-                              : "bg-emerald-100 text-emerald-700"
-                          }`}
-                        >
-                          {teacher.initials}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-bold text-slate-900">
-                            {teacher.name}
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            {teacher.subject}
-                          </p>
-                        </div>
-                      </div>
-
-                      {selected ? (
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveTeacher(teacher.id)}
-                          className="shrink-0 rounded-md border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50"
-                        >
-                          Remover
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => handleAddTeacher(teacher)}
-                          className="inline-flex shrink-0 items-center gap-1 rounded-md border border-[#003b5c] bg-white px-3 py-1.5 text-xs font-semibold text-[#003b5c] transition hover:bg-blue-50"
-                        >
-                          <UserPlus size={13} />
-                          Adicionar
-                        </button>
-                      )}
-                    </article>
-                  );
-                })}
-              </div>
-
-              {selectedTeachers.length > 0 && (
-                <div className="mt-5 rounded-lg border border-blue-100 bg-blue-50 p-4">
-                  <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[#003b5c]">
-                    <CheckCircle2 size={17} />
-                    Professores selecionados
+                <div className="flex items-center justify-between gap-3 px-5 py-4">
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <CalendarDays size={15} />
+                    <span>
+                      {item.schoolYear
+                        ? `Ano letivo ${item.schoolYear}`
+                        : "Ano letivo nao informado"}
+                    </span>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedTeachers.map((teacher) => (
-                      <span
-                        key={teacher.id}
-                        className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm"
-                      >
-                        {teacher.name}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
 
-              {error && (
-                <div
-                  role="alert"
-                  className="mt-5 rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700"
-                >
-                  {error}
+                  <Link
+                    href={`/classes/${item.id}`}
+                    className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-blue-50 px-4 py-2 text-xs font-bold text-[#1e3a8a] transition hover:bg-blue-100"
+                  >
+                    <Eye size={15} />
+                    Ver turma
+                  </Link>
                 </div>
-              )}
-            </section>
+              </article>
+            ))}
           </div>
+        )}
 
-          <div className="flex flex-col-reverse items-stretch justify-end gap-3 border-t border-slate-200 bg-slate-50 px-6 py-5 sm:flex-row sm:items-center sm:px-8">
-            <Link
-              href="/secretaria"
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#003b5c] bg-white px-5 py-2.5 text-sm font-semibold text-[#003b5c] transition hover:bg-blue-50"
-            >
-              <XCircle size={16} />
-              Cancelar
-            </Link>
-            <button
-              type="submit"
-              disabled={loading}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#003b5c] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#062f46] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <PlusCircle size={16} />
-              {loading ? "Criando..." : "Criar Turma"}
-            </button>
+        {!loading && !error && visibleClasses.length === 0 && (
+          <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center">
+            <BookOpen className="mx-auto mb-3 text-slate-400" size={28} />
+            <h3 className="text-sm font-bold text-slate-700">
+              {search ? "Nenhuma turma encontrada" : "Nenhuma turma cadastrada"}
+            </h3>
+            <p className="mt-1 text-sm text-slate-500">
+              {search
+                ? "Revise os termos usados na pesquisa."
+                : "Crie uma nova turma para iniciar a organizacao das classes."}
+            </p>
           </div>
-        </form>
+        )}
       </section>
     </AppLayout>
   );

@@ -19,6 +19,7 @@ function isPrivateApi(pathname: string) {
   return (
     pathname.startsWith("/api/classrooms/") ||
     pathname.startsWith("/api/ia/") ||
+    pathname.startsWith("/api/secretaria/") ||
     pathname.startsWith("/api/turma/")
   );
 }
@@ -57,6 +58,7 @@ export const config = {
     "/provas/:path*",
     "/api/classrooms/:path*",
     "/api/ia/:path*",
+    "/api/secretaria/:path*",
     "/api/turma/:path*",
   ],
 };

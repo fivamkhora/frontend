@@ -1,7 +1,6 @@
 import Link from "next/link";
 import {
   BarChart3,
-  Settings,
   UserPlus,
   Users,
   Search,
@@ -32,22 +31,10 @@ const secretariaCards = [
     title: "Usuarios",
   },
   {
-    description: "Cadastrar uma turma e atribuir professores responsaveis.",
+    description: "Consultar turmas e gerenciar vinculos academicos.",
     href: "/secretaria/classes",
     icon: UserPlus,
-    title: "Criar classes",
-  },
-  {
-    description: "Acompanhar indicadores administrativos e escolares.",
-    href: "/secretaria/relatorios",
-    icon: BarChart3,
-    title: "Relatorios",
-  },
-  {
-    description: "Ajustar parametros e permissoes da secretaria.",
-    href: "/secretaria/configuracoes",
-    icon: Settings,
-    title: "Configuracoes",
+    title: "Classes",
   },
 ];
 
@@ -227,7 +214,7 @@ export default async function SecretariaPage() {
           </div>
         )}
 
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <section className="grid gap-4 md:grid-cols-2">
           {secretariaCards.map((item) => {
             const Icon = item.icon;
 
