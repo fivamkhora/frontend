@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useEffect, useState, type FormEvent } from "react";
+import {
+  Suspense,
+  useEffect,
+  useMemo,
+  useState,
+  type FormEvent,
+} from "react";
 import { useSearchParams } from "next/navigation";
 import { CheckCircle2, Info, PlusCircle, XCircle } from "lucide-react";
 import { AppLayout } from "@/app/_components/AppLayout";
@@ -85,17 +91,11 @@ function SecretariaClassesConfiguracaoContent() {
   const [availableTeachers, setAvailableTeachers] = useState<AssignmentUser[]>(
     [],
   );
-  const [selectedTeachers, setSelectedTeachers] = useState<AssignmentUser[]>(
-    [],
-  );
   const [loadingTeachers, setLoadingTeachers] = useState(true);
   const [teachersError, setTeachersError] = useState("");
   const [teacherActionId, setTeacherActionId] = useState<number | null>(null);
   const [teacherAssignmentError, setTeacherAssignmentError] = useState("");
   const [availableStudents, setAvailableStudents] = useState<AssignmentUser[]>(
-    [],
-  );
-  const [selectedStudents, setSelectedStudents] = useState<AssignmentUser[]>(
     [],
   );
   const [loadingStudents, setLoadingStudents] = useState(true);
@@ -104,6 +104,21 @@ function SecretariaClassesConfiguracaoContent() {
   const [studentAssignmentError, setStudentAssignmentError] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const selectedTeachers = useMemo(
+    () =>
+      availableTeachers.filter((teacher) =>
+        linkedTeacherIds.includes(teacher.id),
+      ),
+    [availableTeachers, linkedTeacherIds],
+  );
+  const selectedStudents = useMemo(
+    () =>
+      availableStudents.filter((student) =>
+        linkedStudentIds.includes(student.id),
+      ),
+    [availableStudents, linkedStudentIds],
+  );
 
   useEffect(() => {
     let active = true;
@@ -214,22 +229,6 @@ function SecretariaClassesConfiguracaoContent() {
     };
   }, [requestedClassroomId]);
 
-  useEffect(() => {
-    setSelectedTeachers(
-      availableTeachers.filter((teacher) =>
-        linkedTeacherIds.includes(teacher.id),
-      ),
-    );
-  }, [availableTeachers, linkedTeacherIds]);
-
-  useEffect(() => {
-    setSelectedStudents(
-      availableStudents.filter((student) =>
-        linkedStudentIds.includes(student.id),
-      ),
-    );
-  }, [availableStudents, linkedStudentIds]);
-
   async function handleAddTeacher(teacher: AssignmentUser) {
     if (!classroomId) {
       setTeacherAssignmentError(
@@ -243,10 +242,10 @@ function SecretariaClassesConfiguracaoContent() {
 
     try {
       await addClassroomTeacher(classroomId, teacher.id);
-      setSelectedTeachers((current) =>
-        current.some((item) => item.id === teacher.id)
+      setLinkedTeacherIds((current) =>
+        current.includes(teacher.id)
           ? current
-          : [...current, teacher],
+          : [...current, teacher.id],
       );
     } catch (actionError) {
       setTeacherAssignmentError(
@@ -269,8 +268,8 @@ function SecretariaClassesConfiguracaoContent() {
 
     try {
       await removeClassroomTeacher(classroomId, teacherId);
-      setSelectedTeachers((current) =>
-        current.filter((teacher) => teacher.id !== teacherId),
+      setLinkedTeacherIds((current) =>
+        current.filter((linkedTeacherId) => linkedTeacherId !== teacherId),
       );
     } catch (actionError) {
       setTeacherAssignmentError(
@@ -294,10 +293,10 @@ function SecretariaClassesConfiguracaoContent() {
 
     try {
       await addClassroomStudent(classroomId, student.id);
-      setSelectedStudents((current) =>
-        current.some((item) => item.id === student.id)
+      setLinkedStudentIds((current) =>
+        current.includes(student.id)
           ? current
-          : [...current, student],
+          : [...current, student.id],
       );
     } catch (actionError) {
       setStudentAssignmentError(
@@ -320,8 +319,8 @@ function SecretariaClassesConfiguracaoContent() {
 
     try {
       await removeClassroomStudent(classroomId, studentId);
-      setSelectedStudents((current) =>
-        current.filter((student) => student.id !== studentId),
+      setLinkedStudentIds((current) =>
+        current.filter((linkedStudentId) => linkedStudentId !== studentId),
       );
     } catch (actionError) {
       setStudentAssignmentError(
