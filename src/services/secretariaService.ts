@@ -18,6 +18,14 @@ export type SecretariaClassroom = {
   updatedAt: string;
 };
 
+export type ClassroomConfiguration = {
+  classroom: SecretariaClassroom;
+  members: Array<{
+    role: string;
+    userId: number;
+  }>;
+};
+
 type ApiErrorResponse = {
   error?: string;
 };
@@ -79,6 +87,33 @@ export async function fetchSecretariaClassrooms(): Promise<
   }
 
   return Array.isArray(data) ? data : [];
+}
+
+export async function fetchClassroomConfiguration(
+  classroomId: string,
+): Promise<ClassroomConfiguration> {
+  const response = await fetch(
+    `/api/secretaria/classes/${encodeURIComponent(classroomId)}`,
+    {
+      headers: {
+        Accept: "application/json",
+      },
+      cache: "no-store",
+    },
+  );
+  const data = (await response.json()) as
+    | ClassroomConfiguration
+    | ApiErrorResponse;
+
+  if (!response.ok) {
+    const errorData = data as ApiErrorResponse;
+
+    throw new Error(
+      errorData.error || "Nao foi possivel carregar a configuracao da turma.",
+    );
+  }
+
+  return data as ClassroomConfiguration;
 }
 
 async function updateClassroomMember(

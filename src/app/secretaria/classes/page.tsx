@@ -199,7 +199,7 @@ export default function SecretariaClassesPage() {
                   </div>
 
                   <Link
-                    href={`/classes/${item.id}`}
+                    href={`/secretaria/classes/configuracao?id=${encodeURIComponent(item.id)}`}
                     className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-blue-50 px-4 py-2 text-xs font-bold text-[#1e3a8a] transition hover:bg-blue-100"
                   >
                     <Eye size={15} />
