@@ -1,10 +1,13 @@
-import { ConfeccaoPageShell } from "../_components/ConfeccaoPageShell";
-import { ConfeccaoProvasEditContent } from "../_components/ConfeccaoProvasEditContent";
+import { ConfeccaoProvasContent } from "../_components/ConfeccaoProvasContent";
 
-export default function ConfeccaoProvasEdicaoPage() {
-  return (
-    <ConfeccaoPageShell>
-      <ConfeccaoProvasEditContent />
-    </ConfeccaoPageShell>
-  );
+type ConfeccaoProvasEdicaoPageProps = {
+  params: Promise<{ id: string }>;
+};
+
+export default async function ConfeccaoProvasEdicaoPage({
+  params,
+}: ConfeccaoProvasEdicaoPageProps) {
+  const { id } = await params;
+
+  return <ConfeccaoProvasContent assessmentIdToEdit={id} />;
 }

@@ -552,6 +552,7 @@ function SecretariaClassesConfiguracaoContent() {
               classroomReady={classroomId !== null}
               description="Selecione um ou mais professores para esta turma:"
               emptyMessage="Nenhum professor cadastrado foi encontrado."
+              filterPlaceholder="Filtrar professores por nome"
               loadError={teachersError}
               loading={loadingTeachers}
               loadingMessage="Carregando professores..."
@@ -571,6 +572,7 @@ function SecretariaClassesConfiguracaoContent() {
               classroomReady={classroomId !== null}
               description="Selecione um ou mais alunos para esta turma:"
               emptyMessage="Nenhum aluno cadastrado foi encontrado."
+              filterPlaceholder="Filtrar alunos por nome"
               loadError={studentsError}
               loading={loadingStudents}
               loadingMessage="Carregando alunos..."
