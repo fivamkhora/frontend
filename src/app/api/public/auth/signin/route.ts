@@ -7,8 +7,8 @@ import {
 } from "@/lib/bff";
 import {
   AUTH_SESSION_COOKIE,
-  AUTH_SESSION_MAX_AGE_SECONDS,
   createSessionCookie,
+  getSessionMaxAgeSeconds,
 } from "@/lib/auth/session";
 
 export const runtime = "nodejs";
@@ -91,11 +91,12 @@ export async function POST(request: Request) {
       role: data.role,
       token: data.token,
     });
+    const sessionMaxAge = getSessionMaxAgeSeconds(data.token);
     const result = NextResponse.json({ role: data.role }, { status: 200 });
 
     result.cookies.set(AUTH_SESSION_COOKIE, sessionCookie, {
       httpOnly: true,
-      maxAge: AUTH_SESSION_MAX_AGE_SECONDS,
+      maxAge: sessionMaxAge,
       path: "/",
       sameSite: "lax",
       secure: true,

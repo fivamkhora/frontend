@@ -1,3 +1,5 @@
+import { redirectToLoginOnUnauthorized } from "@/services/authService";
+
 export type ClassroomMemberPerson = {
   createdAt: string;
   email: string;
@@ -33,6 +35,7 @@ export async function getClassroomDetails(classroomId: string) {
       },
     },
   );
+  redirectToLoginOnUnauthorized(response);
   const data = await readJson<ClassroomDetails | ApiErrorResponse>(response);
 
   if (!response.ok) {

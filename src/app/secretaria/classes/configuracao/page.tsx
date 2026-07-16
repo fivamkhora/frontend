@@ -11,6 +11,7 @@ import {
 import { useSearchParams } from "next/navigation";
 import { CheckCircle2, Info, PlusCircle, XCircle } from "lucide-react";
 import { AppLayout } from "@/app/_components/AppLayout";
+import { redirectToLoginOnUnauthorized } from "@/services/authService";
 import {
   addClassroomStudent,
   addClassroomTeacher,
@@ -20,6 +21,7 @@ import {
   removeClassroomStudent,
   removeClassroomTeacher,
   type DirectoryUser,
+  type ClassroomConfiguration,
 } from "@/services/secretariaService";
 import {
   AssignmentSection,
@@ -77,6 +79,15 @@ function getCreatedClassroomId(data: ApiErrorResponse) {
   return null;
 }
 
+function getMemberIds(
+  members: ClassroomConfiguration["members"],
+  role: "aluno" | "professor",
+) {
+  return members
+    .filter((member) => member.role.trim().toLowerCase() === role)
+    .map((member) => member.userId);
+}
+
 function SecretariaClassesConfiguracaoContent() {
   const searchParams = useSearchParams();
   const requestedClassroomId = searchParams.get("id")?.trim() || null;
@@ -119,6 +130,19 @@ function SecretariaClassesConfiguracaoContent() {
       ),
     [availableStudents, linkedStudentIds],
   );
+
+  function applyMembers(members: ClassroomConfiguration["members"]) {
+    setLinkedTeacherIds(getMemberIds(members, "professor"));
+    setLinkedStudentIds(getMemberIds(members, "aluno"));
+  }
+
+  async function refreshMembers(currentClassroomId: string) {
+    const configuration = await fetchClassroomConfiguration(
+      currentClassroomId,
+    );
+
+    applyMembers(configuration.members);
+  }
 
   useEffect(() => {
     let active = true;
@@ -198,15 +222,9 @@ function SecretariaClassesConfiguracaoContent() {
         setSchoolYear(configuration.classroom.schoolYear || "2026");
         setClassroomId(configuration.classroom.id);
         setLinkedTeacherIds(
-          configuration.members
-            .filter((member) => member.role.trim().toLowerCase() === "professor")
-            .map((member) => member.userId),
+          getMemberIds(configuration.members, "professor"),
         );
-        setLinkedStudentIds(
-          configuration.members
-            .filter((member) => member.role.trim().toLowerCase() === "aluno")
-            .map((member) => member.userId),
-        );
+        setLinkedStudentIds(getMemberIds(configuration.members, "aluno"));
       } catch (loadError) {
         if (active) {
           setError(
@@ -242,11 +260,7 @@ function SecretariaClassesConfiguracaoContent() {
 
     try {
       await addClassroomTeacher(classroomId, teacher.id);
-      setLinkedTeacherIds((current) =>
-        current.includes(teacher.id)
-          ? current
-          : [...current, teacher.id],
-      );
+      await refreshMembers(classroomId);
     } catch (actionError) {
       setTeacherAssignmentError(
         actionError instanceof Error
@@ -268,9 +282,7 @@ function SecretariaClassesConfiguracaoContent() {
 
     try {
       await removeClassroomTeacher(classroomId, teacherId);
-      setLinkedTeacherIds((current) =>
-        current.filter((linkedTeacherId) => linkedTeacherId !== teacherId),
-      );
+      await refreshMembers(classroomId);
     } catch (actionError) {
       setTeacherAssignmentError(
         actionError instanceof Error
@@ -293,11 +305,7 @@ function SecretariaClassesConfiguracaoContent() {
 
     try {
       await addClassroomStudent(classroomId, student.id);
-      setLinkedStudentIds((current) =>
-        current.includes(student.id)
-          ? current
-          : [...current, student.id],
-      );
+      await refreshMembers(classroomId);
     } catch (actionError) {
       setStudentAssignmentError(
         actionError instanceof Error
@@ -319,9 +327,7 @@ function SecretariaClassesConfiguracaoContent() {
 
     try {
       await removeClassroomStudent(classroomId, studentId);
-      setLinkedStudentIds((current) =>
-        current.filter((linkedStudentId) => linkedStudentId !== studentId),
-      );
+      await refreshMembers(classroomId);
     } catch (actionError) {
       setStudentAssignmentError(
         actionError instanceof Error
@@ -360,6 +366,7 @@ function SecretariaClassesConfiguracaoContent() {
           schoolYear,
         }),
       });
+      redirectToLoginOnUnauthorized(response);
       const data = (await response.json()) as ApiErrorResponse;
 
       if (!response.ok) {

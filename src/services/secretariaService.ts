@@ -1,3 +1,5 @@
+import { redirectToLoginOnUnauthorized } from "@/services/authService";
+
 export type DirectoryUser = {
   email: string;
   id: number;
@@ -40,6 +42,7 @@ async function fetchDirectoryUsers(
     },
     cache: "no-store",
   });
+  redirectToLoginOnUnauthorized(response);
   const data = (await response.json()) as DirectoryUser[] | ApiErrorResponse;
 
   if (!response.ok) {
@@ -74,6 +77,7 @@ export async function fetchSecretariaClassrooms(): Promise<
     },
     cache: "no-store",
   });
+  redirectToLoginOnUnauthorized(response);
   const data = (await response.json()) as
     | SecretariaClassroom[]
     | ApiErrorResponse;
@@ -101,6 +105,7 @@ export async function fetchClassroomConfiguration(
       cache: "no-store",
     },
   );
+  redirectToLoginOnUnauthorized(response);
   const data = (await response.json()) as
     | ClassroomConfiguration
     | ApiErrorResponse;
@@ -133,6 +138,7 @@ async function updateClassroomMember(
       body: JSON.stringify({ userId }),
     },
   );
+  redirectToLoginOnUnauthorized(response);
 
   if (!response.ok) {
     const data = (await response.json()) as ApiErrorResponse;

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   BarChart3,
   UserPlus,
@@ -40,21 +41,40 @@ const secretariaCards = [
 
 async function getSecretariaUsers(): Promise<{
   error: string;
+  unauthorized: boolean;
   users: SecretariaUser[];
 }> {
+  const session = await getAuthSession();
+
+  if (!session) {
+    return {
+      error: "Nao autenticado.",
+      unauthorized: true,
+      users: [],
+    };
+  }
+
   try {
-    const session = await getAuthSession();
     const response = await fetch(`${BFF_BASE_URL}/api/v1/auth/user`, {
       headers: {
         Accept: "application/json",
-        ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}),
+        Authorization: `Bearer ${session.token}`,
       },
       cache: "no-store",
     });
 
+    if (response.status === 401) {
+      return {
+        error: "Nao autenticado.",
+        unauthorized: true,
+        users: [],
+      };
+    }
+
     if (!response.ok) {
       return {
         error: `BFF respondeu ${response.status} ao buscar usuarios.`,
+        unauthorized: false,
         users: [],
       };
     }
@@ -64,17 +84,20 @@ async function getSecretariaUsers(): Promise<{
     if (!Array.isArray(data)) {
       return {
         error: "Resposta invalida ao buscar usuarios.",
+        unauthorized: false,
         users: [],
       };
     }
 
     return {
       error: "",
+      unauthorized: false,
       users: data as SecretariaUser[],
     };
   } catch {
     return {
       error: "Nao foi possivel carregar usuarios do BFF.",
+      unauthorized: false,
       users: [],
     };
   }
@@ -109,7 +132,12 @@ function formatBirthDate(value?: string) {
 }
 
 export default async function SecretariaPage() {
-  const { error, users } = await getSecretariaUsers();
+  const { error, unauthorized, users } = await getSecretariaUsers();
+
+  if (unauthorized) {
+    redirect("/login?redirect=%2Fsecretaria");
+  }
+
   const recentUsers = users.slice(0, 5);
   const totalUsers = users.length;
   const totalRoles = getUniqueRoleCount(users);
