@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useMemo, useState } from "react";
-import { CheckCircle2, Search, UserPlus, Users } from "lucide-react";
+import { Search, UserPlus, Users } from "lucide-react";
 import type { DirectoryUser } from "@/services/secretariaService";
 
 export type AssignmentUser = DirectoryUser & {
@@ -21,7 +21,6 @@ type AssignmentSectionProps = {
   loadingMessage: string;
   onAdd: (user: AssignmentUser) => Promise<void>;
   onRemove: (userId: number) => Promise<void>;
-  selectedLabel: string;
   selectedUsers: AssignmentUser[];
   title: string;
 };
@@ -39,7 +38,6 @@ export function AssignmentSection({
   loadingMessage,
   onAdd,
   onRemove,
-  selectedLabel,
   selectedUsers,
   title,
 }: AssignmentSectionProps) {
@@ -74,21 +72,23 @@ export function AssignmentSection({
         {description}
       </p>
 
-      <label htmlFor={filterId} className="relative mb-4 block sm:max-w-sm">
-        <span className="sr-only">{filterPlaceholder}</span>
-        <Search
-          aria-hidden="true"
-          className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400"
-        />
-        <input
-          id={filterId}
-          type="search"
-          value={nameFilter}
-          onChange={(event) => setNameFilter(event.target.value)}
-          placeholder={filterPlaceholder}
-          className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-        />
-      </label>
+      {!loading && !loadError && availableUsers.length > 0 && (
+        <label htmlFor={filterId} className="relative mb-4 block sm:max-w-sm">
+          <span className="sr-only">{filterPlaceholder}</span>
+          <Search
+            aria-hidden="true"
+            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400"
+          />
+          <input
+            id={filterId}
+            type="search"
+            value={nameFilter}
+            onChange={(event) => setNameFilter(event.target.value)}
+            placeholder={filterPlaceholder}
+            className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          />
+        </label>
+      )}
 
       {!classroomReady && (
         <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-800">
@@ -181,25 +181,6 @@ export function AssignmentSection({
               </article>
             );
           })}
-        </div>
-      )}
-
-      {selectedUsers.length > 0 && (
-        <div className="mt-5 rounded-lg border border-blue-100 bg-blue-50 p-4">
-          <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[#003b5c]">
-            <CheckCircle2 size={17} />
-            {selectedLabel}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {selectedUsers.map((user) => (
-              <span
-                key={user.id}
-                className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm"
-              >
-                {user.name}
-              </span>
-            ))}
-          </div>
         </div>
       )}
 

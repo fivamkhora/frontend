@@ -393,12 +393,16 @@ function SecretariaClassesConfiguracaoContent() {
 
   return (
     <AppLayout active="secretaria">
-      <section className="mx-auto max-w-4xl px-6 py-8">
+      <section className="px-4 py-6 sm:px-6 lg:px-8">
         <div className="mb-6">
-          <div className="mb-1 text-xs font-medium text-slate-400">
-            Secretaria &gt; Classes &gt; Configuracao
+          <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-400">
+            <span>Secretaria</span>
+            <span>&gt;</span>
+            <span>Classes</span>
+            <span>&gt;</span>
+            <span className="text-[#1e3a8a]">Configuração</span>
           </div>
-          <h1 className="text-3xl font-bold text-[#003b5c]">
+          <h1 className="text-3xl font-bold text-[#0f3b63]">
             {requestedClassroomId ? "Configurar Turma" : "Nova Turma"}
           </h1>
           <p className="mt-1 text-sm text-slate-500">
@@ -513,35 +517,18 @@ function SecretariaClassesConfiguracaoContent() {
                   className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#003b5c] bg-white px-5 py-2.5 text-sm font-semibold text-[#003b5c] transition hover:bg-blue-50"
                 >
                   <XCircle size={16} />
-                  Cancelar
+                  Voltar
                 </Link>
-                <button
-                  type="submit"
-                  disabled={
-                    loading ||
-                    loadingConfiguration ||
-                    classroomId !== null ||
-                    requestedClassroomId !== null
-                  }
-                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#003b5c] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#062f46] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {classroomId ? (
-                    <CheckCircle2 size={16} />
-                  ) : (
+                {!classroomId && !requestedClassroomId && (
+                  <button
+                    type="submit"
+                    disabled={loading || loadingConfiguration}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#003b5c] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#062f46] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
                     <PlusCircle size={16} />
-                  )}
-                  {loading || loadingConfiguration
-                    ? requestedClassroomId
-                      ? "Carregando..."
-                      : "Criando..."
-                    : classroomId
-                      ? requestedClassroomId
-                        ? "Turma carregada"
-                        : "Turma criada"
-                      : requestedClassroomId
-                        ? "Turma indisponivel"
-                        : "Criar Turma"}
-                </button>
+                    {loading ? "Criando..." : "Criar Turma"}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -558,7 +545,6 @@ function SecretariaClassesConfiguracaoContent() {
               loadingMessage="Carregando professores..."
               onAdd={handleAddTeacher}
               onRemove={handleRemoveTeacher}
-              selectedLabel="Professores vinculados"
               selectedUsers={selectedTeachers}
               title="Atribuicao de professores"
             />
@@ -578,7 +564,6 @@ function SecretariaClassesConfiguracaoContent() {
               loadingMessage="Carregando alunos..."
               onAdd={handleAddStudent}
               onRemove={handleRemoveStudent}
-              selectedLabel="Alunos vinculados"
               selectedUsers={selectedStudents}
               title="Atribuicao de alunos"
             />
@@ -592,9 +577,11 @@ function SecretariaClassesConfiguracaoContent() {
 function ConfigurationLoading() {
   return (
     <AppLayout active="secretaria">
-      <div className="p-8 text-sm font-medium text-slate-500">
-        Carregando configuracao da turma...
-      </div>
+      <section className="px-4 py-6 sm:px-6 lg:px-8">
+        <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-sm font-medium text-slate-500 shadow-sm">
+          Carregando configuracao da turma...
+        </div>
+      </section>
     </AppLayout>
   );
 }
