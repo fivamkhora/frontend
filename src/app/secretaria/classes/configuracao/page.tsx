@@ -11,6 +11,7 @@ import {
 import { useSearchParams } from "next/navigation";
 import { CheckCircle2, Info, PlusCircle, XCircle } from "lucide-react";
 import { AppLayout } from "@/app/_components/AppLayout";
+import { redirectToLoginOnUnauthorized } from "@/services/authService";
 import {
   addClassroomStudent,
   addClassroomTeacher,
@@ -20,6 +21,7 @@ import {
   removeClassroomStudent,
   removeClassroomTeacher,
   type DirectoryUser,
+  type ClassroomConfiguration,
 } from "@/services/secretariaService";
 import {
   AssignmentSection,
@@ -77,6 +79,15 @@ function getCreatedClassroomId(data: ApiErrorResponse) {
   return null;
 }
 
+function getMemberIds(
+  members: ClassroomConfiguration["members"],
+  role: "aluno" | "professor",
+) {
+  return members
+    .filter((member) => member.role.trim().toLowerCase() === role)
+    .map((member) => member.userId);
+}
+
 function SecretariaClassesConfiguracaoContent() {
   const searchParams = useSearchParams();
   const requestedClassroomId = searchParams.get("id")?.trim() || null;
@@ -119,6 +130,19 @@ function SecretariaClassesConfiguracaoContent() {
       ),
     [availableStudents, linkedStudentIds],
   );
+
+  function applyMembers(members: ClassroomConfiguration["members"]) {
+    setLinkedTeacherIds(getMemberIds(members, "professor"));
+    setLinkedStudentIds(getMemberIds(members, "aluno"));
+  }
+
+  async function refreshMembers(currentClassroomId: string) {
+    const configuration = await fetchClassroomConfiguration(
+      currentClassroomId,
+    );
+
+    applyMembers(configuration.members);
+  }
 
   useEffect(() => {
     let active = true;
@@ -198,15 +222,9 @@ function SecretariaClassesConfiguracaoContent() {
         setSchoolYear(configuration.classroom.schoolYear || "2026");
         setClassroomId(configuration.classroom.id);
         setLinkedTeacherIds(
-          configuration.members
-            .filter((member) => member.role.trim().toLowerCase() === "professor")
-            .map((member) => member.userId),
+          getMemberIds(configuration.members, "professor"),
         );
-        setLinkedStudentIds(
-          configuration.members
-            .filter((member) => member.role.trim().toLowerCase() === "aluno")
-            .map((member) => member.userId),
-        );
+        setLinkedStudentIds(getMemberIds(configuration.members, "aluno"));
       } catch (loadError) {
         if (active) {
           setError(
@@ -242,11 +260,7 @@ function SecretariaClassesConfiguracaoContent() {
 
     try {
       await addClassroomTeacher(classroomId, teacher.id);
-      setLinkedTeacherIds((current) =>
-        current.includes(teacher.id)
-          ? current
-          : [...current, teacher.id],
-      );
+      await refreshMembers(classroomId);
     } catch (actionError) {
       setTeacherAssignmentError(
         actionError instanceof Error
@@ -268,9 +282,7 @@ function SecretariaClassesConfiguracaoContent() {
 
     try {
       await removeClassroomTeacher(classroomId, teacherId);
-      setLinkedTeacherIds((current) =>
-        current.filter((linkedTeacherId) => linkedTeacherId !== teacherId),
-      );
+      await refreshMembers(classroomId);
     } catch (actionError) {
       setTeacherAssignmentError(
         actionError instanceof Error
@@ -293,11 +305,7 @@ function SecretariaClassesConfiguracaoContent() {
 
     try {
       await addClassroomStudent(classroomId, student.id);
-      setLinkedStudentIds((current) =>
-        current.includes(student.id)
-          ? current
-          : [...current, student.id],
-      );
+      await refreshMembers(classroomId);
     } catch (actionError) {
       setStudentAssignmentError(
         actionError instanceof Error
@@ -319,9 +327,7 @@ function SecretariaClassesConfiguracaoContent() {
 
     try {
       await removeClassroomStudent(classroomId, studentId);
-      setLinkedStudentIds((current) =>
-        current.filter((linkedStudentId) => linkedStudentId !== studentId),
-      );
+      await refreshMembers(classroomId);
     } catch (actionError) {
       setStudentAssignmentError(
         actionError instanceof Error
@@ -360,6 +366,7 @@ function SecretariaClassesConfiguracaoContent() {
           schoolYear,
         }),
       });
+      redirectToLoginOnUnauthorized(response);
       const data = (await response.json()) as ApiErrorResponse;
 
       if (!response.ok) {
@@ -386,12 +393,16 @@ function SecretariaClassesConfiguracaoContent() {
 
   return (
     <AppLayout active="secretaria">
-      <section className="mx-auto max-w-4xl px-6 py-8">
+      <section className="px-4 py-6 sm:px-6 lg:px-8">
         <div className="mb-6">
-          <div className="mb-1 text-xs font-medium text-slate-400">
-            Secretaria &gt; Classes &gt; Configuracao
+          <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-400">
+            <span>Secretaria</span>
+            <span>&gt;</span>
+            <span>Classes</span>
+            <span>&gt;</span>
+            <span className="text-[#1e3a8a]">Configuração</span>
           </div>
-          <h1 className="text-3xl font-bold text-[#003b5c]">
+          <h1 className="text-3xl font-bold text-[#0f3b63]">
             {requestedClassroomId ? "Configurar Turma" : "Nova Turma"}
           </h1>
           <p className="mt-1 text-sm text-slate-500">
@@ -506,35 +517,18 @@ function SecretariaClassesConfiguracaoContent() {
                   className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#003b5c] bg-white px-5 py-2.5 text-sm font-semibold text-[#003b5c] transition hover:bg-blue-50"
                 >
                   <XCircle size={16} />
-                  Cancelar
+                  Voltar
                 </Link>
-                <button
-                  type="submit"
-                  disabled={
-                    loading ||
-                    loadingConfiguration ||
-                    classroomId !== null ||
-                    requestedClassroomId !== null
-                  }
-                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#003b5c] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#062f46] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {classroomId ? (
-                    <CheckCircle2 size={16} />
-                  ) : (
+                {!classroomId && !requestedClassroomId && (
+                  <button
+                    type="submit"
+                    disabled={loading || loadingConfiguration}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#003b5c] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#062f46] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
                     <PlusCircle size={16} />
-                  )}
-                  {loading || loadingConfiguration
-                    ? requestedClassroomId
-                      ? "Carregando..."
-                      : "Criando..."
-                    : classroomId
-                      ? requestedClassroomId
-                        ? "Turma carregada"
-                        : "Turma criada"
-                      : requestedClassroomId
-                        ? "Turma indisponivel"
-                        : "Criar Turma"}
-                </button>
+                    {loading ? "Criando..." : "Criar Turma"}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -545,12 +539,12 @@ function SecretariaClassesConfiguracaoContent() {
               classroomReady={classroomId !== null}
               description="Selecione um ou mais professores para esta turma:"
               emptyMessage="Nenhum professor cadastrado foi encontrado."
+              filterPlaceholder="Filtrar professores por nome"
               loadError={teachersError}
               loading={loadingTeachers}
               loadingMessage="Carregando professores..."
               onAdd={handleAddTeacher}
               onRemove={handleRemoveTeacher}
-              selectedLabel="Professores vinculados"
               selectedUsers={selectedTeachers}
               title="Atribuicao de professores"
             />
@@ -564,12 +558,12 @@ function SecretariaClassesConfiguracaoContent() {
               classroomReady={classroomId !== null}
               description="Selecione um ou mais alunos para esta turma:"
               emptyMessage="Nenhum aluno cadastrado foi encontrado."
+              filterPlaceholder="Filtrar alunos por nome"
               loadError={studentsError}
               loading={loadingStudents}
               loadingMessage="Carregando alunos..."
               onAdd={handleAddStudent}
               onRemove={handleRemoveStudent}
-              selectedLabel="Alunos vinculados"
               selectedUsers={selectedStudents}
               title="Atribuicao de alunos"
             />
@@ -583,9 +577,11 @@ function SecretariaClassesConfiguracaoContent() {
 function ConfigurationLoading() {
   return (
     <AppLayout active="secretaria">
-      <div className="p-8 text-sm font-medium text-slate-500">
-        Carregando configuracao da turma...
-      </div>
+      <section className="px-4 py-6 sm:px-6 lg:px-8">
+        <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-sm font-medium text-slate-500 shadow-sm">
+          Carregando configuracao da turma...
+        </div>
+      </section>
     </AppLayout>
   );
 }

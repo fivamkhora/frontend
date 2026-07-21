@@ -13,7 +13,6 @@ type BffClassroom = {
   code?: unknown;
   createdAt?: unknown;
   id?: unknown;
-  members?: unknown;
   name?: unknown;
   schoolYear?: unknown;
   teacherId?: unknown;
@@ -39,34 +38,57 @@ function getClassroom(value: unknown) {
   return typeof classroom.id === "string" ? classroom : null;
 }
 
-function getMembers(classroom: BffClassroom) {
-  const members = Array.isArray(classroom.members)
-    ? classroom.members
-        .filter((member) => member && typeof member === "object")
-        .map((member) => member as BffClassroomMember)
-        .filter(
-          (member) =>
-            typeof member.userId === "number" &&
-            typeof member.role === "string",
-        )
-        .map((member) => ({
-          role: member.role as string,
-          userId: member.userId as number,
-        }))
-    : [];
+function getMembers(value: unknown) {
+  const wrappedValue =
+    value && typeof value === "object"
+      ? (value as { data?: unknown })
+      : null;
+  const members = Array.isArray(value)
+    ? value
+    : Array.isArray(wrappedValue?.data)
+      ? wrappedValue.data
+      : [];
 
-  if (
-    typeof classroom.teacherId === "number" &&
-    !members.some(
+  return members
+    .filter((member) => member && typeof member === "object")
+    .map((member) => member as BffClassroomMember)
+    .filter(
       (member) =>
-        member.userId === classroom.teacherId &&
-        member.role.toLowerCase() === "professor",
+        typeof member.userId === "number" &&
+        typeof member.role === "string",
     )
-  ) {
-    members.push({ role: "Professor", userId: classroom.teacherId });
+    .map((member) => ({
+      role: member.role as string,
+      userId: member.userId as number,
+    }));
+}
+
+async function fetchBffJson(path: string, token: string) {
+  const response = await fetch(`${BFF_BASE_URL}${path}`, {
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    cache: "no-store",
+  });
+  const responseText = await response.text();
+
+  return {
+    data: parseJsonSafely(responseText),
+    ok: response.ok,
+    status: response.status,
+  };
+}
+
+function getUpstreamErrorStatus(
+  classroomResponse: { ok: boolean; status: number },
+  membersResponse: { ok: boolean; status: number },
+) {
+  if (!classroomResponse.ok) {
+    return classroomResponse.status;
   }
 
-  return members;
+  return membersResponse.status;
 }
 
 export async function GET(_request: Request, context: RouteContext) {
@@ -84,21 +106,18 @@ export async function GET(_request: Request, context: RouteContext) {
   }
 
   try {
-    const response = await fetch(
-      `${BFF_BASE_URL}/api/v1/turma/classrooms/${encodeURIComponent(classroomId)}`,
-      {
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${session.token}`,
-        },
-        cache: "no-store",
-      },
-    );
-    const responseText = await response.text();
-    const classroom = getClassroom(parseJsonSafely(responseText));
+    const classroomPath = `/api/v1/turma/classrooms/${encodeURIComponent(classroomId)}`;
+    const [classroomResponse, membersResponse] = await Promise.all([
+      fetchBffJson(classroomPath, session.token),
+      fetchBffJson(`${classroomPath}/classrooms`, session.token),
+    ]);
+    const classroom = getClassroom(classroomResponse.data);
 
-    if (!response.ok) {
-      return jsonError("Nao foi possivel carregar a turma.", response.status);
+    if (!classroomResponse.ok || !membersResponse.ok) {
+      return jsonError(
+        "Nao foi possivel carregar a turma e seus membros.",
+        getUpstreamErrorStatus(classroomResponse, membersResponse),
+      );
     }
 
     if (!classroom || classroom.id !== classroomId) {
@@ -121,7 +140,7 @@ export async function GET(_request: Request, context: RouteContext) {
         updatedAt:
           typeof classroom.updatedAt === "string" ? classroom.updatedAt : "",
       },
-      members: getMembers(classroom),
+      members: getMembers(membersResponse.data),
     });
   } catch {
     return jsonError("Nao foi possivel comunicar com o BFF.", 502);

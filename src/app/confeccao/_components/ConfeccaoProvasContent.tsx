@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   BookOpen,
   ClipboardList,
@@ -35,7 +35,6 @@ type AssessmentResponse = {
         answerKey: unknown[];
       };
     };
-    versions: unknown[];
   };
 };
 
@@ -279,8 +278,7 @@ export function ConfeccaoProvasContent({
   assessmentIdToEdit?: string;
 }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const editAssessmentId = assessmentIdToEdit ?? searchParams.get("id");
+  const editAssessmentId = assessmentIdToEdit;
   const [materia, setMateria] = useState("Ciências");
   const [anoEscolar, setAnoEscolar] = useState("6º ano");
   const [tipoAvaliacao, setTipoAvaliacao] = useState("prova");
@@ -475,27 +473,45 @@ export function ConfeccaoProvasContent({
 
   return (
     <AppLayout active="confeccao">
-      <section className="mx-auto grid max-w-7xl gap-6 px-4 py-6 md:grid-cols-[380px_1fr] md:px-8">
-        {loadingAssessment && (
-          <div className="rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm font-medium text-blue-900 md:col-span-2">
-            Carregando avaliação para edição...
-          </div>
-        )}
+      <section className="px-4 py-6 sm:px-6 lg:px-8">
+        <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-400">
+          <span>Painel</span>
+          <span>&gt;</span>
+          <span className="text-[#1e3a8a]">Confecção de Provas</span>
+        </div>
 
-        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="mb-5 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-[#1e3a8a]">
-              <ClipboardList size={22} />
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-[#0f3b63]">
+            {isRevisionMode ? "Editar Prova" : "Confeccionar Prova"}
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            {isRevisionMode
+              ? "Revise as configurações e solicite os ajustes da avaliação."
+              : "Configure o conteúdo e gere uma avaliação com apoio da IA."}
+          </p>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-[minmax(300px,380px)_minmax(0,1fr)]">
+          {loadingAssessment && (
+            <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm font-medium text-blue-900 lg:col-span-2">
+              Carregando avaliação para edição...
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-slate-950">
-                Configuração Base
-              </h1>
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                {resumoConfiguracao}
-              </p>
+          )}
+
+          <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="mb-5 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-[#1e3a8a]">
+                <ClipboardList size={22} />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-slate-950">
+                  Configuração Base
+                </h2>
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                  {resumoConfiguracao}
+                </p>
+              </div>
             </div>
-          </div>
 
           <div className="space-y-4">
             <label className="block">
@@ -543,7 +559,7 @@ export function ConfeccaoProvasContent({
               </select>
             </label>
 
-            <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2">
               <label className="block">
                 <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
                   Questões
@@ -603,7 +619,7 @@ export function ConfeccaoProvasContent({
           )}
         </section>
 
-        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <section className="min-w-0 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="mb-5 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
               <BookOpen size={22} />
@@ -685,7 +701,8 @@ export function ConfeccaoProvasContent({
               assessment={resultado.data.currentVersion.assessment}
             />
           )}
-        </section>
+          </section>
+        </div>
       </section>
     </AppLayout>
   );

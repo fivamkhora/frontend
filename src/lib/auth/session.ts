@@ -56,6 +56,42 @@ function base64UrlDecodeText(value: string) {
   return new TextDecoder().decode(bytes);
 }
 
+function getJwtExpiresAt(token: string) {
+  const [, encodedPayload] = token.split(".");
+
+  if (!encodedPayload) {
+    return null;
+  }
+
+  try {
+    const payload = JSON.parse(base64UrlDecodeText(encodedPayload)) as {
+      exp?: unknown;
+    };
+
+    return typeof payload.exp === "number" && Number.isFinite(payload.exp)
+      ? payload.exp * 1000
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+export function getSessionMaxAgeSeconds(token: string) {
+  const jwtExpiresAt = getJwtExpiresAt(token);
+
+  if (jwtExpiresAt === null) {
+    return AUTH_SESSION_MAX_AGE_SECONDS;
+  }
+
+  return Math.max(
+    0,
+    Math.min(
+      AUTH_SESSION_MAX_AGE_SECONDS,
+      Math.floor((jwtExpiresAt - Date.now()) / 1000),
+    ),
+  );
+}
+
 function timingSafeEqual(left: string, right: string) {
   if (left.length !== right.length) {
     return false;
@@ -96,8 +132,9 @@ export async function createSessionCookie({
   role: string;
   token: string;
 }) {
+  const maxAge = getSessionMaxAgeSeconds(token);
   const payload: SessionPayload = {
-    expiresAt: Date.now() + AUTH_SESSION_MAX_AGE_SECONDS * 1000,
+    expiresAt: Date.now() + maxAge * 1000,
     role,
     token,
     version: 1,
@@ -131,13 +168,18 @@ export async function verifySessionCookie(
     const payload = JSON.parse(
       base64UrlDecodeText(encodedPayload),
     ) as SessionPayload;
+    const jwtExpiresAt =
+      typeof payload.token === "string"
+        ? getJwtExpiresAt(payload.token)
+        : null;
 
     if (
       payload.version !== 1 ||
       typeof payload.token !== "string" ||
       typeof payload.role !== "string" ||
       typeof payload.expiresAt !== "number" ||
-      payload.expiresAt <= Date.now()
+      payload.expiresAt <= Date.now() ||
+      (jwtExpiresAt !== null && jwtExpiresAt <= Date.now())
     ) {
       return null;
     }

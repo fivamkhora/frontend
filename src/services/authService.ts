@@ -43,6 +43,17 @@ function getErrorMessage(data: ApiErrorResponse, fallback: string) {
   return data.message || data.error || fallback;
 }
 
+export function redirectToLoginOnUnauthorized(response: Pick<Response, "status">) {
+  if (response.status !== 401 || typeof window === "undefined") {
+    return;
+  }
+
+  const currentPath = `${window.location.pathname}${window.location.search}`;
+  const loginUrl = `/login?redirect=${encodeURIComponent(currentPath)}`;
+
+  window.location.replace(loginUrl);
+}
+
 export async function login(
   username: string,
   password: string,
@@ -75,6 +86,7 @@ export async function fetchAuthenticatedUser(): Promise<AuthenticatedUser> {
       Accept: "application/json",
     },
   });
+  redirectToLoginOnUnauthorized(response);
   const data = await readJson<AuthenticatedUser | ApiErrorResponse>(response);
 
   if (!response.ok) {
@@ -97,6 +109,7 @@ export async function fetchTeacherClassrooms(): Promise<Classroom[]> {
       Accept: "application/json",
     },
   });
+  redirectToLoginOnUnauthorized(response);
   const data = await readJson<Classroom[] | ApiErrorResponse>(response);
 
   if (!response.ok) {
@@ -125,6 +138,7 @@ export async function createUser(data: CreateUser) {
     },
     body: JSON.stringify(data),
   });
+  redirectToLoginOnUnauthorized(response);
 
   const result = await response.json();
 

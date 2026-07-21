@@ -1,4 +1,7 @@
-import { CheckCircle2, UserPlus, Users } from "lucide-react";
+"use client";
+
+import { useId, useMemo, useState } from "react";
+import { Search, UserPlus, Users } from "lucide-react";
 import type { DirectoryUser } from "@/services/secretariaService";
 
 export type AssignmentUser = DirectoryUser & {
@@ -12,12 +15,12 @@ type AssignmentSectionProps = {
   classroomReady: boolean;
   description: string;
   emptyMessage: string;
+  filterPlaceholder: string;
   loadError: string;
   loading: boolean;
   loadingMessage: string;
   onAdd: (user: AssignmentUser) => Promise<void>;
   onRemove: (userId: number) => Promise<void>;
-  selectedLabel: string;
   selectedUsers: AssignmentUser[];
   title: string;
 };
@@ -29,16 +32,29 @@ export function AssignmentSection({
   classroomReady,
   description,
   emptyMessage,
+  filterPlaceholder,
   loadError,
   loading,
   loadingMessage,
   onAdd,
   onRemove,
-  selectedLabel,
   selectedUsers,
   title,
 }: AssignmentSectionProps) {
+  const filterId = useId();
+  const [nameFilter, setNameFilter] = useState("");
   const selectedUserIds = new Set(selectedUsers.map((user) => user.id));
+  const filteredUsers = useMemo(() => {
+    const normalizedFilter = nameFilter.trim().toLocaleLowerCase("pt-BR");
+
+    if (!normalizedFilter) {
+      return availableUsers;
+    }
+
+    return availableUsers.filter((user) =>
+      user.name.toLocaleLowerCase("pt-BR").includes(normalizedFilter),
+    );
+  }, [availableUsers, nameFilter]);
 
   return (
     <section>
@@ -55,6 +71,24 @@ export function AssignmentSection({
       <p className="mb-4 text-sm font-semibold text-slate-700">
         {description}
       </p>
+
+      {!loading && !loadError && availableUsers.length > 0 && (
+        <label htmlFor={filterId} className="relative mb-4 block sm:max-w-sm">
+          <span className="sr-only">{filterPlaceholder}</span>
+          <Search
+            aria-hidden="true"
+            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400"
+          />
+          <input
+            id={filterId}
+            type="search"
+            value={nameFilter}
+            onChange={(event) => setNameFilter(event.target.value)}
+            placeholder={filterPlaceholder}
+            className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          />
+        </label>
+      )}
 
       {!classroomReady && (
         <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-800">
@@ -83,9 +117,15 @@ export function AssignmentSection({
         </div>
       )}
 
-      {!loading && availableUsers.length > 0 && (
+      {!loading && availableUsers.length > 0 && filteredUsers.length === 0 && (
+        <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-500">
+          Nenhum usuario encontrado com esse nome.
+        </div>
+      )}
+
+      {!loading && filteredUsers.length > 0 && (
         <div className="grid gap-4 md:grid-cols-2">
-          {availableUsers.map((user) => {
+          {filteredUsers.map((user) => {
             const selected = selectedUserIds.has(user.id);
             const processing = actionUserId === user.id;
 
@@ -141,25 +181,6 @@ export function AssignmentSection({
               </article>
             );
           })}
-        </div>
-      )}
-
-      {selectedUsers.length > 0 && (
-        <div className="mt-5 rounded-lg border border-blue-100 bg-blue-50 p-4">
-          <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[#003b5c]">
-            <CheckCircle2 size={17} />
-            {selectedLabel}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {selectedUsers.map((user) => (
-              <span
-                key={user.id}
-                className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm"
-              >
-                {user.name}
-              </span>
-            ))}
-          </div>
         </div>
       )}
 

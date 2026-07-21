@@ -24,6 +24,18 @@ function isPrivateApi(pathname: string) {
   );
 }
 
+function clearSessionCookie(response: NextResponse) {
+  response.cookies.set(AUTH_SESSION_COOKIE, "", {
+    httpOnly: true,
+    maxAge: 0,
+    path: "/",
+    sameSite: "lax",
+    secure: true,
+  });
+
+  return response;
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -40,13 +52,15 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isPrivateApi(pathname)) {
-    return NextResponse.json({ error: "Nao autenticado." }, { status: 401 });
+    return clearSessionCookie(
+      NextResponse.json({ error: "Nao autenticado." }, { status: 401 }),
+    );
   }
 
   const loginUrl = new URL("/login", request.url);
   loginUrl.searchParams.set("redirect", `${pathname}${request.nextUrl.search}`);
 
-  return NextResponse.redirect(loginUrl);
+  return clearSessionCookie(NextResponse.redirect(loginUrl));
 }
 
 export const config = {

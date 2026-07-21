@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { AUTH_SESSION_COOKIE } from "@/lib/auth/session";
 
 export const BFF_BASE_URL =
   process.env.BFF_BASE_URL?.replace(/\/$/, "") ??
@@ -30,8 +31,25 @@ export async function readJsonPayload(request: Request) {
   }
 }
 
+function clearSessionOnUnauthorized(response: NextResponse, status: number) {
+  if (status === 401) {
+    response.cookies.set(AUTH_SESSION_COOKIE, "", {
+      httpOnly: true,
+      maxAge: 0,
+      path: "/",
+      sameSite: "lax",
+      secure: true,
+    });
+  }
+
+  return response;
+}
+
 export function jsonError(error: string, status: number) {
-  return NextResponse.json({ error }, { status });
+  return clearSessionOnUnauthorized(
+    NextResponse.json({ error }, { status }),
+    status,
+  );
 }
 
 export async function proxyBffJson({
@@ -57,15 +75,20 @@ export async function proxyBffJson({
     const data = parseJsonSafely(responseText);
 
     if (!response.ok) {
-      return NextResponse.json(
-        {
-          error: errorMessage,
-          upstreamStatus: response.status,
-          upstreamPath: path,
-          upstreamResponse:
-            data ?? responseText ?? "Resposta vazia retornada pelo BFF.",
-        },
-        { status: response.status === 404 ? 502 : response.status },
+      const status = response.status === 404 ? 502 : response.status;
+
+      return clearSessionOnUnauthorized(
+        NextResponse.json(
+          {
+            error: errorMessage,
+            upstreamStatus: response.status,
+            upstreamPath: path,
+            upstreamResponse:
+              data ?? responseText ?? "Resposta vazia retornada pelo BFF.",
+          },
+          { status },
+        ),
+        status,
       );
     }
 
