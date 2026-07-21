@@ -9,6 +9,7 @@ import {
   fetchAuthenticatedUser,
   type AuthenticatedUser,
 } from "@/services/authService";
+import Turmas from "./components/Turmas";
 
 export default function TemporaryDashboardPage() {
   const currentDateLabel = getCurrentDateLabel();
@@ -67,6 +68,10 @@ export default function TemporaryDashboardPage() {
               <Brain size={30} />
             </div>
           </div>
+        </div>
+
+        <div className="mt-8">
+          <Turmas />
         </div>
 
         <div className="mt-8 grid gap-4 md:grid-cols-2">
