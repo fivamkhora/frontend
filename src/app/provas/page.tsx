@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { AppLayout } from "@/app/_components/AppLayout";
 
-type BffAssessment = {
+export type BffAssessment = {
   id: string;
   originalRequest?: {
     subject?: string;
@@ -30,14 +30,14 @@ type BffAssessment = {
   createdAt?: string;
 };
 
-type AssessmentsResponse = {
+export type AssessmentsResponse = {
   data: BffAssessment[];
   meta?: {
     count?: number;
   };
 };
 
-type AssessmentItem = {
+export type AssessmentItem = {
   id: string;
   title: string;
   subject: string;
@@ -48,7 +48,7 @@ type AssessmentItem = {
   tagColor: "green" | "blue" | "purple" | "cyan" | "slate";
 };
 
-const tagStyles = {
+export const tagStyles = {
   green: "bg-emerald-50 text-emerald-700 border-emerald-200",
   blue: "bg-blue-50 text-blue-700 border-blue-200",
   purple: "bg-violet-50 text-violet-700 border-violet-200",
@@ -56,14 +56,14 @@ const tagStyles = {
   slate: "bg-slate-50 text-slate-700 border-slate-200",
 };
 
-function normalizeText(value: string) {
+export function normalizeText(value: string) {
   return value
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
 }
 
-function parseDate(value?: string) {
+export function parseDate(value?: string) {
   if (!value) {
     return null;
   }
@@ -73,7 +73,7 @@ function parseDate(value?: string) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-function formatDate(value?: string) {
+export function formatDate(value?: string) {
   const date = parseDate(value);
 
   if (!date) {
@@ -87,7 +87,7 @@ function formatDate(value?: string) {
   })}`;
 }
 
-function getSubjectPresentation(subject: string): {
+export function getSubjectPresentation(subject: string): {
   icon: AssessmentItem["icon"];
   tagColor: AssessmentItem["tagColor"];
 } {
@@ -112,15 +112,14 @@ function getSubjectPresentation(subject: string): {
   return { icon: "default", tagColor: "slate" };
 }
 
-function toAssessmentItem(assessment: BffAssessment): AssessmentItem {
+export function toAssessmentItem(assessment: BffAssessment): AssessmentItem {
   const subject = assessment.originalRequest?.subject || "Matéria";
   const presentation = getSubjectPresentation(subject);
 
   return {
     id: assessment.id,
     title:
-      assessment.currentVersion?.assessment?.title ||
-      `Avaliação de ${subject}`,
+      assessment.currentVersion?.assessment?.title || `Avaliação de ${subject}`,
     subject,
     gradeLevel: assessment.originalRequest?.gradeLevel || "Ano não informado",
     createdAt: formatDate(assessment.createdAt),
@@ -130,7 +129,7 @@ function toAssessmentItem(assessment: BffAssessment): AssessmentItem {
   };
 }
 
-function AssessmentIcon({ icon }: { icon: AssessmentItem["icon"] }) {
+export function AssessmentIcon({ icon }: { icon: AssessmentItem["icon"] }) {
   const className = "h-6 w-6";
 
   if (icon === "science") {
@@ -173,10 +172,12 @@ export default function ProvasPage() {
             Accept: "application/json",
           },
         });
-        const data = (await response.json()) as AssessmentsResponse | {
-          error?: string;
-          message?: string;
-        };
+        const data = (await response.json()) as
+          | AssessmentsResponse
+          | {
+              error?: string;
+              message?: string;
+            };
 
         if (!response.ok) {
           throw new Error(
@@ -404,4 +405,3 @@ export default function ProvasPage() {
     </AppLayout>
   );
 }
-

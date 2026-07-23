@@ -63,7 +63,7 @@ export default function Sidebar({ active }: SidebarProps) {
   };
 
   return (
-    <aside className="flex h-screen w-64 flex-col border-r border-slate-200 bg-white">
+    <aside className="sticky top-0 h-screen w-72 border-r bg-white flex flex-col flex-shrink-0">
       <div className="flex h-14 items-center px-6  ">
         <h1 className="text-2xl text-blue-600 flex items-center gap-3 font-bold">
           <Brain />

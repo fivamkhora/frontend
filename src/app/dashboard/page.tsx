@@ -10,6 +10,7 @@ import {
   type AuthenticatedUser,
 } from "@/services/authService";
 import Turmas from "./components/Turmas";
+import Provas from "./components/Provas";
 
 export default function TemporaryDashboardPage() {
   const currentDateLabel = getCurrentDateLabel();
@@ -47,9 +48,7 @@ export default function TemporaryDashboardPage() {
             <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
               Bem-vindo de volta, {user?.name || "Professor"}.
             </h1>
-            <p className="mt-1 text-sm text-blue-100">
-              {currentDateLabel}
-            </p>
+            <p className="mt-1 text-sm text-blue-100">{currentDateLabel}</p>
             <p className="mt-2 text-sm text-blue-100 md:text-base leading-relaxed">
               Sua jornada de ensino facilitada pela inteligência artificial.
               Transforme horas de trabalho em minutos de criatividade.
@@ -74,40 +73,8 @@ export default function TemporaryDashboardPage() {
           <Turmas />
         </div>
 
-        <div className="mt-8 grid gap-4 md:grid-cols-2">
-          <Link
-            href="/confeccao"
-            className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-          >
-            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-blue-50 text-[#1e3a8a]">
-              <FilePlus2 size={22} />
-            </div>
-
-            <h2 className="text-base font-semibold text-slate-900">
-              Confeccionar prova
-            </h2>
-
-            <p className="mt-2 text-sm text-slate-500">
-              Criar uma nova avaliacao escolar com apoio da plataforma.
-            </p>
-          </Link>
-
-          <Link
-            href="/provas"
-            className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-          >
-            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-blue-50 text-[#1e3a8a]">
-              <Files size={22} />
-            </div>
-
-            <h2 className="text-base font-semibold text-slate-900">
-              Lista de provas
-            </h2>
-
-            <p className="mt-2 text-sm text-slate-500">
-              Visualizar, revisar e acompanhar provas ja criadas.
-            </p>
-          </Link>
+        <div className="mt-8">
+          <Provas />
         </div>
       </section>
     </AppLayout>
