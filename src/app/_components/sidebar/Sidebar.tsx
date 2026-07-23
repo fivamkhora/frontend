@@ -9,6 +9,7 @@ import {
   Files,
   Home,
   Brain,
+  ClipboardCheck,
 } from "lucide-react";
 
 import { logout } from "@/services/authService";
@@ -20,6 +21,7 @@ type AppLayoutActiveItem =
   | "classes"
   | "secretaria"
   | "confeccao"
+  | "atribuirprova"
   | "provas";
 
 type SidebarProps = {
@@ -51,6 +53,12 @@ const navItems: Array<{
     icon: Files,
     key: "provas",
     label: "Lista de provas",
+  },
+  {
+    href: "/atribuirprova",
+    icon: ClipboardCheck,
+    key: "atribuirprova",
+    label: "Atribuir provas",
   },
 ];
 
