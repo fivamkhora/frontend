@@ -151,7 +151,21 @@ export function AssessmentIcon({ icon }: { icon: AssessmentItem["icon"] }) {
   return <FileText className={className} />;
 }
 
-export default function ProvasPage() {
+type ProvasPageContentProps = {
+  active?: "atribuirprova" | "provas";
+  breadcrumbLabel?: string;
+  description?: string;
+  showEditAction?: boolean;
+  title?: string;
+};
+
+export function ProvasPageContent({
+  active = "provas",
+  breadcrumbLabel = "Provas",
+  description = "Gerencie e visualize todas as provas criadas com o auxílio da IA.",
+  showEditAction = true,
+  title = "Lista de Provas",
+}: ProvasPageContentProps = {}) {
   const [search, setSearch] = useState("");
   const [assessments, setAssessments] = useState<AssessmentItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -255,21 +269,21 @@ export default function ProvasPage() {
   }, [assessments]);
 
   return (
-    <AppLayout active="provas">
+    <AppLayout active={active}>
       <section className="px-4 py-6 sm:px-6 lg:px-8">
         <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-400">
           <span>Painel</span>
           <span>&gt;</span>
-          <span className="text-[#1e3a8a]">Provas</span>
+          <span className="text-[#1e3a8a]">{breadcrumbLabel}</span>
         </div>
 
         <header className="mb-6">
           <div>
             <h1 className="text-3xl font-bold text-[#0f3b63]">
-              Lista de Provas
+              {title}
             </h1>
             <p className="mt-1 max-w-2xl text-sm text-slate-500">
-              Gerencie e visualize todas as provas criadas com o auxílio da IA.
+              {description}
             </p>
           </div>
         </header>
@@ -384,13 +398,15 @@ export default function ProvasPage() {
                   </span>
                 </div>
 
-                <Link
-                  href={`/confeccao/${assessment.id}`}
-                  className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-[#1e3a8a] transition hover:border-blue-200 hover:bg-blue-50 sm:self-start"
-                >
-                  <Edit3 size={16} />
-                  Editar
-                </Link>
+                {showEditAction && (
+                  <Link
+                    href={`/confeccao/${assessment.id}`}
+                    className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-[#1e3a8a] transition hover:border-blue-200 hover:bg-blue-50 sm:self-start"
+                  >
+                    <Edit3 size={16} />
+                    Editar
+                  </Link>
+                )}
               </article>
             ))}
 
@@ -404,4 +420,8 @@ export default function ProvasPage() {
       </section>
     </AppLayout>
   );
+}
+
+export default function ProvasPage() {
+  return <ProvasPageContent />;
 }

@@ -13,6 +13,7 @@ type AppLayoutActiveItem =
   | "classes"
   | "secretaria"
   | "confeccao"
+  | "atribuirprova"
   | "provas";
 
 type AppLayoutProps = {
