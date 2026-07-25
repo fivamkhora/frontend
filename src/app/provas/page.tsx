@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   CalendarDays,
   Edit3,
@@ -155,6 +155,7 @@ type ProvasPageContentProps = {
   active?: "atribuirprova" | "provas";
   breadcrumbLabel?: string;
   description?: string;
+  renderAction?: (assessment: AssessmentItem) => ReactNode;
   showEditAction?: boolean;
   title?: string;
 };
@@ -163,6 +164,7 @@ export function ProvasPageContent({
   active = "provas",
   breadcrumbLabel = "Provas",
   description = "Gerencie e visualize todas as provas criadas com o auxílio da IA.",
+  renderAction,
   showEditAction = true,
   title = "Lista de Provas",
 }: ProvasPageContentProps = {}) {
@@ -398,15 +400,17 @@ export function ProvasPageContent({
                   </span>
                 </div>
 
-                {showEditAction && (
-                  <Link
-                    href={`/confeccao/${assessment.id}`}
-                    className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-[#1e3a8a] transition hover:border-blue-200 hover:bg-blue-50 sm:self-start"
-                  >
-                    <Edit3 size={16} />
-                    Editar
-                  </Link>
-                )}
+                {renderAction
+                  ? renderAction(assessment)
+                  : showEditAction && (
+                    <Link
+                      href={`/confeccao/${assessment.id}`}
+                      className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-[#1e3a8a] transition hover:border-blue-200 hover:bg-blue-50 sm:self-start"
+                    >
+                      <Edit3 size={16} />
+                      Editar
+                    </Link>
+                  )}
               </article>
             ))}
 
