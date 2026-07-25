@@ -1,12 +1,9 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import Sidebar from "./sidebar/Sidebar";
 import Header from "./header/Header";
-import {
-  fetchAuthenticatedUser,
-  type AuthenticatedUser,
-} from "@/services/authService";
+import { useAuth } from "@/context/AuthContext";
 
 type AppLayoutActiveItem =
   | "home"
@@ -19,42 +16,10 @@ type AppLayoutActiveItem =
 type AppLayoutProps = {
   active: AppLayoutActiveItem;
   children: ReactNode;
-  user?: AuthenticatedUser | null;
 };
 
-export function AppLayout({ active, children, user }: AppLayoutProps) {
-  const [currentUser, setCurrentUser] = useState<AuthenticatedUser | null>(
-    user ?? null,
-  );
-
-  useEffect(() => {
-    if (user !== undefined) {
-      setCurrentUser(user);
-      return;
-    }
-
-    let mounted = true;
-
-    async function loadUser() {
-      try {
-        const authenticatedUser = await fetchAuthenticatedUser();
-
-        if (mounted) {
-          setCurrentUser(authenticatedUser);
-        }
-      } catch {
-        if (mounted) {
-          setCurrentUser(null);
-        }
-      }
-    }
-
-    loadUser();
-
-    return () => {
-      mounted = false;
-    };
-  }, [user]);
+export function AppLayout({ active, children }: AppLayoutProps) {
+  const { user } = useAuth();
 
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans text-slate-900">
@@ -62,7 +27,7 @@ export function AppLayout({ active, children, user }: AppLayoutProps) {
         <Sidebar active={active} />
 
         <main className="min-w-0 flex-1">
-          <Header user={currentUser} />
+          <Header user={user} />
           {children}
         </main>
       </div>

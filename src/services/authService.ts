@@ -43,8 +43,14 @@ function getErrorMessage(data: ApiErrorResponse, fallback: string) {
   return data.message || data.error || fallback;
 }
 
-export function redirectToLoginOnUnauthorized(response: Pick<Response, "status">) {
+export function redirectToLoginOnUnauthorized(
+  response: Pick<Response, "status">,
+) {
   if (response.status !== 401 || typeof window === "undefined") {
+    return;
+  }
+
+  if (window.location.pathname.startsWith("/login")) {
     return;
   }
 
