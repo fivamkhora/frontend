@@ -3,6 +3,7 @@ import { AUTH_SESSION_COOKIE, verifySessionCookie } from "@/lib/auth/session";
 
 const privatePageRoutes = [
   "/dashboard",
+  "/alunos",
   "/classes",
   "/secretaria",
   "/confeccao",
@@ -66,6 +67,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/dashboard/:path*",
+    "/alunos/:path*",
     "/classes/:path*",
     "/secretaria/:path*",
     "/confeccao/:path*",

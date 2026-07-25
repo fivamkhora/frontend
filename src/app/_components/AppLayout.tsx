@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 
 type AppLayoutActiveItem =
   | "home"
+  | "alunos"
   | "classes"
   | "secretaria"
   | "confeccao"

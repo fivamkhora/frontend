@@ -169,7 +169,7 @@ export default function StudentPerformancePage() {
   }
 
   return (
-    <AppLayout active="classes">
+    <AppLayout active="alunos">
       <section className="px-4 py-6 sm:px-6 lg:px-8 print:p-0">
         <div className="mx-auto max-w-7xl space-y-6">
           <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center print:hidden">

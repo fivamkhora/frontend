@@ -9,6 +9,7 @@ import {
   Files,
   Home,
   Brain,
+  BarChart3,
   ClipboardCheck,
 } from "lucide-react";
 
@@ -19,6 +20,7 @@ import { useAuth, UserRole } from "@/context/AuthContext";
 
 type AppLayoutActiveItem =
   | "home"
+  | "alunos"
   | "classes"
   | "secretaria"
   | "confeccao"
@@ -29,54 +31,72 @@ type SidebarProps = {
   active: AppLayoutActiveItem;
 };
 
+const ALL_ROLES: readonly UserRole[] = [
+  "Administrador",
+  "Professor",
+  "Aluno",
+];
+const ACADEMIC_MANAGEMENT_ROLES: readonly UserRole[] = [
+  "Administrador",
+  "Professor",
+];
+const ADMIN_ONLY_ROLES: readonly UserRole[] = ["Administrador"];
+
 const navItems: Array<{
   href: string;
   icon: LucideIcon;
   key: AppLayoutActiveItem;
   label: string;
-  roles: UserRole[];
+  roles: readonly UserRole[];
 }> = [
   {
     href: "/dashboard",
     icon: Home,
     key: "home",
     label: "Home",
-    roles: ["Administrador", "Professor", "Aluno"],
+    roles: ALL_ROLES,
   },
   {
     href: "/classes",
     icon: GraduationCap,
     key: "classes",
     label: "Classes",
-    roles: ["Administrador", "Professor"],
+    roles: ACADEMIC_MANAGEMENT_ROLES,
+  },
+  {
+    href: "/alunos/mock/desempenho",
+    icon: BarChart3,
+    key: "alunos",
+    label: "Desempenho",
+    roles: ALL_ROLES,
   },
   {
     href: "/secretaria",
     icon: Users,
     key: "secretaria",
     label: "Secretaria",
-    roles: ["Administrador"],
+    roles: ADMIN_ONLY_ROLES,
   },
   {
     href: "/confeccao",
     icon: FilePlus2,
     key: "confeccao",
     label: "Confeccionar provas",
-    roles: ["Administrador", "Professor"],
+    roles: ACADEMIC_MANAGEMENT_ROLES,
   },
   {
     href: "/provas",
     icon: Files,
     key: "provas",
     label: "Lista de provas",
-    roles: ["Administrador", "Professor", "Aluno"],
+    roles: ACADEMIC_MANAGEMENT_ROLES,
   },
   {
     href: "/atribuirprova",
     icon: ClipboardCheck,
     key: "atribuirprova",
     label: "Atribuir provas",
-    roles: ["Administrador", "Professor"],
+    roles: ACADEMIC_MANAGEMENT_ROLES,
   },
 ];
 
