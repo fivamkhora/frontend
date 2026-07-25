@@ -10,9 +10,7 @@ import {
   Search,
 } from "lucide-react";
 import {
-  fetchAuthenticatedUser,
   fetchTeacherClassrooms,
-  type AuthenticatedUser,
   type Classroom,
 } from "@/services/authService";
 import { AppLayout } from "@/app/_components/AppLayout";
@@ -74,7 +72,6 @@ export function ClassesPageContent({
   detailsBasePath = "/classes",
   title = "Minhas Turmas",
 }: ClassesPageContentProps = {}) {
-  const [user, setUser] = useState<AuthenticatedUser | null>(null);
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [loadingClasses, setLoadingClasses] = useState(true);
   const [error, setError] = useState("");
@@ -84,15 +81,11 @@ export function ClassesPageContent({
   useEffect(() => {
     let active = true;
 
-    async function loadUser() {
+    async function loadClasses() {
       try {
-        const [authenticatedUser, classrooms] = await Promise.all([
-          fetchAuthenticatedUser(),
-          fetchTeacherClassrooms(),
-        ]);
+        const classrooms = await fetchTeacherClassrooms();
 
         if (active) {
-          setUser(authenticatedUser);
           setClasses(classrooms.map(toClassItem));
         }
       } catch {
@@ -106,7 +99,7 @@ export function ClassesPageContent({
       }
     }
 
-    loadUser();
+    loadClasses();
 
     return () => {
       active = false;
@@ -135,7 +128,7 @@ export function ClassesPageContent({
   const ActionIcon = active === "atribuirprova" ? ClipboardCheck : Eye;
 
   return (
-    <AppLayout active={active} user={user}>
+    <AppLayout active={active}>
       <section className="px-4 py-6 sm:px-6 lg:px-8">
         <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-400">
           <span>Painel</span>

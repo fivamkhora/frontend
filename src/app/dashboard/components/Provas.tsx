@@ -4,15 +4,12 @@ import {
   AssessmentIcon,
   AssessmentItem,
   AssessmentsResponse,
-  normalizeText,
   toAssessmentItem,
 } from "@/app/provas/page";
-import { ArrowRight } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 export default function Provas() {
-  const [search, setSearch] = useState("");
   const [assessments, setAssessments] = useState<AssessmentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -85,19 +82,7 @@ export default function Provas() {
   }, []);
 
   const filteredAssessments = useMemo(() => {
-    const term = normalizeText(search.trim());
-
-    const items = term
-      ? assessments.filter((assessment) =>
-          normalizeText(
-            [assessment.title, assessment.subject, assessment.gradeLevel].join(
-              " ",
-            ),
-          ).includes(term),
-        )
-      : assessments;
-
-    return items
+    return assessments
       .slice()
       .sort((a, b) => {
         const getTime = (dateVal: string | Date | null | undefined) => {
@@ -108,7 +93,7 @@ export default function Provas() {
         return getTime(b.createdAtDate) - getTime(a.createdAtDate);
       })
       .slice(0, 4);
-  }, [assessments, search]);
+  }, [assessments]);
 
   if (loading) {
     return (

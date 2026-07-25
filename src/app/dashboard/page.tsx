@@ -1,47 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { Brain, FilePlus2, Files, Sparkles } from "lucide-react";
+import { Brain, Sparkles } from "lucide-react";
 import { AppLayout } from "@/app/_components/AppLayout";
 import { getCurrentDateLabel } from "@/services/date";
-import {
-  fetchAuthenticatedUser,
-  type AuthenticatedUser,
-} from "@/services/authService";
+import { useAuth } from "@/context/AuthContext";
 import Turmas from "./components/Turmas";
 import Provas from "./components/Provas";
 
 export default function TemporaryDashboardPage() {
   const currentDateLabel = getCurrentDateLabel();
-  const [user, setUser] = useState<AuthenticatedUser | null>(null);
-
-  useEffect(() => {
-    let active = true;
-
-    async function loadUser() {
-      try {
-        const authenticatedUser = await fetchAuthenticatedUser();
-
-        if (active) {
-          setUser(authenticatedUser);
-        }
-      } catch {
-        if (active) {
-          setUser(null);
-        }
-      }
-    }
-
-    loadUser();
-
-    return () => {
-      active = false;
-    };
-  }, []);
+  const { user } = useAuth();
 
   return (
-    <AppLayout active="home" user={user}>
+    <AppLayout active="home">
       <section className="p-8">
         <div className="relative overflow-hidden rounded-2xl bg-blue-600 p-8 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
           <div className="z-10 flex-1 max-w-2xl">

@@ -12,10 +12,6 @@ import {
   User,
 } from "lucide-react";
 import {
-  fetchAuthenticatedUser,
-  type AuthenticatedUser,
-} from "@/services/authService";
-import {
   getClassroomDetails,
   type ClassroomDetails,
   type ClassroomMemberPerson,
@@ -54,7 +50,6 @@ export function ClassDetailsPageContent({
 }: {
   classroomId: string;
 }) {
-  const [user, setUser] = useState<AuthenticatedUser | null>(null);
   const [details, setDetails] = useState<ClassroomDetails | null>(null);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -68,13 +63,9 @@ export function ClassDetailsPageContent({
       setError("");
 
       try {
-        const [authenticatedUser, classroomDetails] = await Promise.all([
-          fetchAuthenticatedUser(),
-          getClassroomDetails(classroomId),
-        ]);
+        const classroomDetails = await getClassroomDetails(classroomId);
 
         if (active) {
-          setUser(authenticatedUser);
           setDetails(classroomDetails);
         }
       } catch {
@@ -104,7 +95,7 @@ export function ClassDetailsPageContent({
   );
 
   return (
-    <AppLayout active="classes" user={user}>
+    <AppLayout active="classes">
       <section className="px-8 py-6">
         <Link
           href="/classes"

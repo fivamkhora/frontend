@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Plus, ArrowRight, GraduationCap, Calendar } from "lucide-react";
+import { ArrowRight, GraduationCap, Calendar } from "lucide-react";
 import Link from "next/link";
 import { Classroom, fetchTeacherClassrooms } from "@/services/authService";
 
