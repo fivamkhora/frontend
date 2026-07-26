@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { fetchAuthenticatedUser, login } from "@/services/authService";
+import { login } from "@/services/authService";
+import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import type { SyntheticEvent } from "react";
 import {
@@ -22,6 +23,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { refreshUser } = useAuth();
 
   const handleLogin = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -30,13 +32,13 @@ export default function LoginPage() {
 
     try {
       await login(username, password);
-      await fetchAuthenticatedUser();
+      await refreshUser();
 
       const redirectTo = new URLSearchParams(window.location.search).get(
         "redirect",
       );
 
-      router.push(
+      router.replace(
         redirectTo?.startsWith("/") && !redirectTo.startsWith("//")
           ? redirectTo
           : "/dashboard",

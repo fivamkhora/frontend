@@ -11,6 +11,7 @@ import {
   Brain,
   BarChart3,
   ClipboardCheck,
+  FileCheck2,
 } from "lucide-react";
 
 import { logout } from "@/services/authService";
@@ -20,6 +21,7 @@ import { useAuth, UserRole } from "@/context/AuthContext";
 
 type AppLayoutActiveItem =
   | "home"
+  | "provasAluno"
   | "alunos"
   | "classes"
   | "secretaria"
@@ -41,6 +43,7 @@ const ACADEMIC_MANAGEMENT_ROLES: readonly UserRole[] = [
   "Professor",
 ];
 const ADMIN_ONLY_ROLES: readonly UserRole[] = ["Administrador"];
+const STUDENT_ONLY_ROLES: readonly UserRole[] = ["Aluno"];
 
 const navItems: Array<{
   href: string;
@@ -62,6 +65,13 @@ const navItems: Array<{
     key: "classes",
     label: "Classes",
     roles: ACADEMIC_MANAGEMENT_ROLES,
+  },
+  {
+    href: "/aluno/provas",
+    icon: FileCheck2,
+    key: "provasAluno",
+    label: "Minhas provas",
+    roles: STUDENT_ONLY_ROLES,
   },
   {
     href: "/alunos/mock/desempenho",
@@ -102,7 +112,7 @@ const navItems: Array<{
 
 export default function Sidebar({ active }: SidebarProps) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { isLoading, user } = useAuth();
 
   const handleLogout = async () => {
     await logout();
@@ -123,20 +133,27 @@ export default function Sidebar({ active }: SidebarProps) {
       </div>
 
       <nav className="flex flex-1 flex-col p-3 gap-3 mt-5">
-        {filteredNavItems.map((item) => {
-          const Icon = item.icon;
+        {isLoading
+          ? Array.from({ length: 5 }, (_, index) => (
+              <div
+                key={index}
+                className="h-11 animate-pulse rounded-lg bg-slate-100"
+              />
+            ))
+          : filteredNavItems.map((item) => {
+              const Icon = item.icon;
 
-          return (
-            <CustomNavLink
-              key={item.key}
-              href={item.href}
-              icon={<Icon size={18} />}
-              isActive={active === item.key}
-            >
-              {item.label}
-            </CustomNavLink>
-          );
-        })}
+              return (
+                <CustomNavLink
+                  key={item.key}
+                  href={item.href}
+                  icon={<Icon size={18} />}
+                  isActive={active === item.key}
+                >
+                  {item.label}
+                </CustomNavLink>
+              );
+            })}
       </nav>
 
       <div className="p-3">
