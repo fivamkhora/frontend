@@ -1,8 +1,6 @@
 # Khora Frontend
 
-Frontend web do sistema Khora, desenvolvido com Next.js, React e TypeScript.
-
-O projeto possui uma tela de login integrada ao BFF, redirecionamento da raiz (`/`) para `/login` e uma tela temporaria de dashboard em `/dashboard`.
+Frontend web do sistema educacional Khora, desenvolvido com Next.js, React e TypeScript. A aplicacao integra autenticacao, gestao de turmas e usuarios, criacao de provas com IA, aplicacao de avaliacoes e acompanhamento de resultados.
 
 ## Apoio de IA na interface
 
@@ -15,7 +13,7 @@ https://stitch.withgoogle.com/
 ## Stack
 
 - Node.js 22
-- Next.js 15
+- Next.js 15 com App Router
 - React 19
 - TypeScript
 - Tailwind CSS 4
@@ -23,18 +21,163 @@ https://stitch.withgoogle.com/
 - Docker multi-stage com imagem `node:22-alpine`
 - Deploy via Vercel ou imagem Docker no Render
 
+## Paginas e funcoes
+
+### Acesso e painel
+
+| Rota | Funcao |
+| --- | --- |
+| `/` | Redireciona para a pagina de login. |
+| `/login` | Autentica o usuario pelo BFF e inicia uma sessao segura. |
+| `/dashboard` | Exibe o painel inicial adequado ao perfil Administrador, Professor ou Aluno. |
+
+### Provas e avaliacoes
+
+| Rota | Funcao |
+| --- | --- |
+| `/confeccao` | Inicia a criacao de uma prova a partir do material e das configuracoes informadas pelo professor. |
+| `/confeccao/[id]` | Carrega uma prova existente, permite gerar revisoes por IA, reorganizar questoes e respostas e imprimir prova ou gabarito. |
+| `/provas` | Lista as provas criadas pela API de IA e permite abrir uma prova para edicao. |
+| `/atribuirprova` | Seleciona uma prova, turmas e periodo de aplicacao para publicar uma avaliacao. |
+| `/atribuirprova/[Id]` | Fluxo por turma para consultar provas disponiveis e aplicar uma prova ainda nao vinculada. |
+| `/avaliacoes` | Lista avaliacoes atribuidas e apresenta acoes conforme o perfil do usuario. |
+| `/provas/[examId]/realize` | Permite ao aluno responder e enviar uma avaliacao. |
+| `/provas/[examId]/resultado` | Exibe o resultado e a revisao das respostas de uma avaliacao realizada. |
+| `/notas` | Exibe ao aluno suas entregas, notas e situacoes das avaliacoes. |
+
+### Turmas e desempenho
+
+| Rota | Funcao |
+| --- | --- |
+| `/classes` | Lista as turmas vinculadas ao professor autenticado. |
+| `/classes/[id]` | Exibe os dados e os membros de uma turma. |
+| `/alunos/mock/desempenho` | Tela demonstrativa, com dados mockados, para visualizacao do desempenho academico de um aluno. |
+
+### Secretaria
+
+| Rota | Funcao |
+| --- | --- |
+| `/secretaria` | Central de acesso aos recursos administrativos. |
+| `/secretaria/usuarios` | Lista usuarios cadastrados no BFF. |
+| `/secretaria/usuarios/novo` | Cadastra um novo usuario. |
+| `/secretaria/usuarios/[id]` | Consulta e edita os dados de um usuario. |
+| `/secretaria/classes` | Lista todas as turmas e oferece acesso a criacao e configuracao. |
+| `/secretaria/classes/configuracao` | Cria ou edita uma turma e vincula ou remove professores e alunos. |
+
+### Visibilidade por perfil
+
+O menu lateral adapta as opcoes ao `role` retornado pela autenticacao:
+
+- `Administrador`: secretaria, turmas, confeccao, provas, atribuicao de provas, avaliacoes e desempenho.
+- `Professor`: turmas, confeccao, provas, atribuicao de provas, avaliacoes e desempenho.
+- `Aluno`: avaliacoes e minhas notas.
+
+O dashboard possui uma apresentacao especifica para cada perfil. A protecao de acesso nao depende apenas do menu: as rotas privadas exigem uma sessao valida no middleware.
+
 ## Estrutura principal
 
 ```text
-src/app/page.tsx              Redireciona / para /login
-src/app/login/page.tsx        Tela de login
-src/app/dashboard/page.tsx    Dashboard temporario
-src/services/auth.ts          Cliente de autenticacao
-tests/auth.test.mjs           Testes automatizados do cliente de autenticacao
-docker/Dockerfile             Build Docker de producao
-vercel.json                   Configuracao de build da Vercel
-.github/workflows/ci.yml      CI, scan Trivy, Docker Hub e deploy Render
+src/app/                         Paginas e Route Handlers do App Router
+src/app/_components/             Layout e navegacao compartilhados
+src/app/api/                     Proxies server-side para o BFF
+src/context/AuthContext.tsx      Estado do usuario autenticado no cliente
+src/lib/auth/                    Criacao e validacao da sessao assinada
+src/lib/bff.ts                   Configuracao centralizada do BFF
+src/services/authService.ts      Operacoes reutilizaveis de autenticacao
+src/services/classroomService.ts Operacoes reutilizaveis de turmas
+src/services/secretariaService.ts Operacoes administrativas reutilizaveis
+src/services/date.ts             Formatacao da data exibida no dashboard
+middleware.ts                    Protecao das paginas e APIs privadas
+tests/auth.test.mjs              Testes automatizados de autenticacao
+docker/Dockerfile                Build Docker de producao
+vercel.json                      Configuracao de build da Vercel
+.github/workflows/ci.yml         CI, scan Trivy, Docker Hub e deploy Render
 ```
+
+## Integracao com o BFF
+
+As telas chamam Route Handlers internos do Next.js. Esses handlers leem a sessao no servidor e encaminham a requisicao para `BFF_BASE_URL`, evitando expor o host do BFF, o JWT ou outros dados sensiveis no codigo do navegador.
+
+Principais grupos de rotas internas:
+
+| Prefixo | Responsabilidade |
+| --- | --- |
+| `/api/public/auth/signin` | Login publico e criacao da sessao. |
+| `/api/auth/*` | Consulta do usuario autenticado e logout. |
+| `/api/ia/*` | Criacao, listagem e revisao de provas pela API de IA. |
+| `/api/avaliacao/*` | Provas publicadas, questoes, respostas e entregas. |
+| `/api/classrooms/*` e `/api/turma/*` | Consulta de turmas e membros. |
+| `/api/secretaria/*` | Usuarios, professores, alunos e configuracao de turmas. |
+
+Exemplos de encaminhamento:
+
+```text
+POST /api/public/auth/signin
+  -> POST ${BFF_BASE_URL}/api/v1/auth/user/signin
+
+GET /api/auth/whoami
+  -> GET ${BFF_BASE_URL}/api/v1/auth/user/whoami
+
+POST /api/ia/assessments
+  -> POST ${BFF_BASE_URL}/api/v1/ia/assessments
+
+POST /api/ia/revisions
+  -> POST ${BFF_BASE_URL}/api/v1/ia/assessments/{id}/revisions
+```
+
+Os valores enviados para geracao de provas seguem os formatos:
+
+```text
+assessmentType: prova | quiz | trabalho
+difficulty: facil | medio | dificil
+```
+
+## Autenticacao e seguranca
+
+No login, o servidor armazena o JWT retornado pelo BFF dentro do cookie `khora_session`, configurado com `httpOnly`, `secure` em producao e `sameSite=lax`. O segredo usado para assinar a sessao vem de `AUTH_SESSION_SECRET`.
+
+Apos autenticar, `fetchAuthenticatedUser()` em `src/services/authService.ts` consulta `/api/auth/whoami`. O frontend recebe apenas os dados necessarios para a interface, como `id`, `username`, `name`, `email` e `role`.
+
+Rotas privadas sao protegidas pelo `middleware.ts`, incluindo:
+
+```text
+/dashboard
+/alunos
+/avaliacoes
+/classes
+/confeccao
+/notas
+/provas
+/secretaria
+/api/avaliacao/*
+/api/classrooms/*
+/api/ia/*
+/api/secretaria/*
+/api/turma/*
+```
+
+Rotas sob `/api/public/*` sao excecoes publicas e devem ser usadas apenas por operacoes disponiveis antes do login.
+
+Para proteger uma nova pagina, adicione seu prefixo em `privatePageRoutes` e no `matcher` de `middleware.ts`. Para uma nova API, use um prefixo privado existente ou inclua o novo prefixo em `isPrivateApi` e no `matcher`.
+
+Em Server Components ou Route Handlers, use as funcoes reutilizaveis:
+
+```ts
+import { getAuthSession, requireAuthSession } from "@/lib/auth/server";
+```
+
+`requireAuthSession()` redireciona para `/login` quando nao houver sessao valida. `getAuthSession()` retorna a sessao ou `null`.
+
+## Variaveis de ambiente
+
+Configure nos ambientes local, preview e producao:
+
+```text
+BFF_BASE_URL=https://bff-khora.onrender.com
+AUTH_SESSION_SECRET=troque-por-um-segredo-com-no-minimo-32-caracteres
+```
+
+`AUTH_SESSION_SECRET` e obrigatorio, deve ter no minimo 32 caracteres e precisa ser diferente em cada ambiente.
 
 ## Desenvolvimento local
 
@@ -50,11 +193,7 @@ Rode o servidor de desenvolvimento:
 npm run dev
 ```
 
-Acesse:
-
-```text
-http://localhost:3000
-```
+Acesse `http://localhost:3000`.
 
 ## Scripts
 
@@ -63,12 +202,12 @@ npm run dev          # Inicia o Next.js em modo desenvolvimento
 npm run lint         # Executa ESLint
 npm run typecheck    # Valida TypeScript sem gerar arquivos
 npm test             # Executa testes com node:test
-npm run build        # Gera build de producao do Next.js
+npm run build        # Gera o build de producao do Next.js
 npm run start        # Inicia o app usando next start
 npm run test:vercel  # Executa lint, typecheck, testes e build
 ```
 
-O script recomendado para validar antes de deploy e:
+Antes do deploy, execute:
 
 ```bash
 npm run test:vercel
@@ -76,16 +215,7 @@ npm run test:vercel
 
 ## Testes
 
-Os testes usam o runner nativo do Node.js (`node:test`) e validam o comportamento do cliente de autenticacao:
-
-- credenciais sao enviadas para a rota interna de autenticacao;
-- erros retornados pelo BFF sao propagados para a tela.
-
-Arquivo de teste:
-
-```text
-tests/auth.test.mjs
-```
+Os testes usam o runner nativo do Node.js (`node:test`) e validam o cliente de autenticacao, incluindo envio de credenciais para a rota interna e tratamento dos erros devolvidos pelo BFF.
 
 ## Build para Vercel
 
@@ -99,90 +229,9 @@ A Vercel usa o arquivo `vercel.json`:
 }
 ```
 
-Isso faz o deploy falhar caso lint, typecheck, testes ou build falhem.
-
-### Variaveis de ambiente
-
-Configure a URL do BFF nos ambientes de preview e producao:
-
-```text
-BFF_BASE_URL=https://bff-khora.onrender.com
-AUTH_SESSION_SECRET=troque-por-um-segredo-com-no-minimo-32-caracteres
-```
-
-`AUTH_SESSION_SECRET` e obrigatorio e deve ter no minimo 32 caracteres. Use um valor forte e diferente por ambiente.
-
-A pagina `/confeccao` chama a rota interna `/api/ia/assessments`, e o Next.js encaminha a requisicao para:
-
-```text
-POST ${BFF_BASE_URL}/api/v1/ia/assessments
-```
-
-Esse proxy server-side evita acoplar a tela diretamente ao host do BFF e segue melhor o modelo de deploy em Vercel/Node.js.
-
-A pagina `/login` chama a rota publica interna `/api/public/auth/signin`, e o Next.js encaminha a requisicao para:
-
-```text
-POST ${BFF_BASE_URL}/api/v1/auth/user/signin
-```
-
-No sucesso, o servidor cria um cookie `khora_session` com `httpOnly`, `secure` e `sameSite=lax`. O JWT retornado pelo BFF fica dentro da sessao assinada e nao e exposto ao frontend.
-
-Apos autenticar, o frontend usa `fetchAuthenticatedUser()` de `src/services/authService.ts` para chamar `/api/auth/whoami`. Essa rota le o JWT da sessao httpOnly no servidor e consulta:
-
-```text
-GET ${BFF_BASE_URL}/api/v1/auth/user/whoami
-```
-
-O retorno contem apenas os dados do usuario logado necessarios para a interface, como `id`, `username`, `name`, `email` e `role`.
-
-A pagina `/classes/[id]` chama a rota interna `/api/classrooms/{id}`. Essa rota le a sessao httpOnly, busca os membros no BFF de Turma e depois busca os usuarios no BFF Auth:
-
-```text
-GET ${BFF_BASE_URL}/api/v1/turma/classrooms/{id}
-GET ${BFF_BASE_URL}/api/v1/auth/users?ids=1%2C2
-```
-
-A resposta entregue ao frontend separa `teachers` e `students` e nao retorna CPF, data de nascimento ou token.
-
-Rotas privadas sao protegidas pelo `middleware.ts`:
-
-```text
-/dashboard
-/classes
-/confeccao
-/provas
-/api/classrooms/*
-/api/ia/*
-/api/turma/*
-```
-
-Rotas sob `/api/public/*` sao excecoes publicas e nao exigem sessao autenticada. Use esse prefixo somente para endpoints que precisam estar disponiveis antes do login, como signin.
-
-Para proteger uma nova rota de pagina, adicione o prefixo em `privatePageRoutes` no `middleware.ts`. Para proteger novas APIs, mantenha-as sob um prefixo privado ja protegido ou adicione um novo prefixo em `isPrivateApi`.
-
-Em Server Components ou Route Handlers, use as funcoes reutilizaveis:
-
-```ts
-import { getAuthSession, requireAuthSession } from "@/lib/auth/server";
-```
-
-`requireAuthSession()` redireciona para `/login` quando nao houver sessao valida. `getAuthSession()` retorna a sessao ou `null`.
-
-Valores enviados para o BFF:
-
-```text
-assessmentType: prova | quiz | trabalho
-difficulty: facil | medio | dificil
-```
+O deploy falha caso lint, typecheck, testes ou build falhem.
 
 ## Build Docker
-
-O Dockerfile fica em:
-
-```text
-docker/Dockerfile
-```
 
 Build local:
 
@@ -193,28 +242,13 @@ docker build -f docker/Dockerfile -t khora-frontend .
 Execucao local:
 
 ```bash
-docker run --rm -p 8080:8080 khora-frontend
+docker run --rm -p 8080:8080 \
+  -e BFF_BASE_URL=https://bff-khora.onrender.com \
+  -e AUTH_SESSION_SECRET=troque-por-um-segredo-com-no-minimo-32-caracteres \
+  khora-frontend
 ```
 
-Configuracao de runtime no container:
-
-```text
-NODE_ENV=production
-HOSTNAME=0.0.0.0
-PORT=8080
-```
-
-O `next.config.ts` usa:
-
-```ts
-output: "standalone"
-```
-
-Por isso o container copia `.next/standalone` e inicia com:
-
-```bash
-node server.js
-```
+O container usa `NODE_ENV=production`, `HOSTNAME=0.0.0.0` e `PORT=8080`. O `next.config.ts` define `output: "standalone"`, e a imagem inicia a aplicacao com `node server.js`.
 
 ## CI/CD
 
@@ -223,8 +257,8 @@ O workflow `.github/workflows/ci.yml` executa:
 1. `npm ci`
 2. `npm run test:vercel`
 3. scan de vulnerabilidades com Trivy
-4. build e push da imagem Docker para Docker Hub
-5. trigger de deploy no Render via API
+4. build e push da imagem para o Docker Hub
+5. acionamento do deploy no Render
 
 Secrets esperados no GitHub Actions:
 
@@ -235,20 +269,8 @@ RENDER_API_KEY
 RENDER_SERVICE_ID
 ```
 
-Imagem Docker configurada no workflow:
-
-```text
-fivamkhora/frontend
-```
+A imagem configurada no workflow e `fivamkhora/frontend`.
 
 ## Render
 
-O deploy no Render e acionado pelo workflow depois que a imagem Docker e publicada.
-
-Para evitar erro 502, confirme no Render se o servico esta configurado para usar a mesma porta do container:
-
-```text
-8080
-```
-
-O container tambem define `HOSTNAME=0.0.0.0`, necessario para expor o servidor corretamente dentro da plataforma.
+O deploy no Render e acionado pelo workflow depois da publicacao da imagem Docker. Para evitar erro HTTP 502, o servico deve usar a porta `8080`; o container tambem define `HOSTNAME=0.0.0.0` para expor corretamente o servidor.
