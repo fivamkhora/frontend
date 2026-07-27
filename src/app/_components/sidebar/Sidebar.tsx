@@ -22,6 +22,7 @@ import { useAuth, UserRole } from "@/context/AuthContext";
 type AppLayoutActiveItem =
   | "home"
   | "secretaria"
+  | "provasAluno"
   | "alunos"
   | "classes"
   | "confeccao"
@@ -54,6 +55,27 @@ const navItems: Array<{
     icon: Home,
     key: "home",
     label: "Home",
+    roles: ALL_ROLES,
+  },
+  {
+    href: "/classes",
+    icon: GraduationCap,
+    key: "classes",
+    label: "Classes",
+    roles: ACADEMIC_MANAGEMENT_ROLES,
+  },
+  {
+    href: "/aluno/provas",
+    icon: FileCheck2,
+    key: "provasAluno",
+    label: "Minhas provas",
+    roles: STUDENT_ONLY_ROLES,
+  },
+  {
+    href: "/alunos/mock/desempenho",
+    icon: BarChart3,
+    key: "alunos",
+    label: "Desempenho",
     roles: ALL_ROLES,
   },
   {
@@ -139,21 +161,28 @@ export default function Sidebar({ active }: SidebarProps) {
         </h1>
       </div>
 
-      <nav className="flex flex-1 flex-col p-3 gap-1 mt-5 overflow-y-auto">
-        {filteredNavItems.map((item) => {
-          const Icon = item.icon;
+      <nav className="flex flex-1 flex-col p-3 gap-3 mt-5">
+        {isLoading
+          ? Array.from({ length: 5 }, (_, index) => (
+              <div
+                key={index}
+                className="h-11 animate-pulse rounded-lg bg-slate-100"
+              />
+            ))
+          : filteredNavItems.map((item) => {
+              const Icon = item.icon;
 
-          return (
-            <CustomNavLink
-              key={item.key}
-              href={item.href}
-              icon={<Icon size={18} />}
-              isActive={active === item.key}
-            >
-              {item.label}
-            </CustomNavLink>
-          );
-        })}
+              return (
+                <CustomNavLink
+                  key={item.key}
+                  href={item.href}
+                  icon={<Icon size={18} />}
+                  isActive={active === item.key}
+                >
+                  {item.label}
+                </CustomNavLink>
+              );
+            })}
       </nav>
 
       <div className="p-3 border-t border-slate-100">
