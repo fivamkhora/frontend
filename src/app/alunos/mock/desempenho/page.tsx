@@ -1,455 +1,430 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import {
   ArrowLeft,
-  Award,
-  BarChart3,
-  CalendarCheck,
   CheckCircle2,
-  ChevronRight,
-  ClipboardCheck,
   GraduationCap,
-  Mail,
-  MessageSquare,
+  Hash,
   Printer,
   TrendingUp,
 } from "lucide-react";
 import { AppLayout } from "@/app/_components/AppLayout";
 
-type SubjectPerformance = {
-  attendance: number;
+type SubjectStatus = "Aprovado" | "Recuperação";
+
+type SubjectGrade = {
   average: number;
-  firstTerm: number;
-  id: number;
-  secondTerm: number;
-  status: "Aprovado" | "Atenção";
+  firstGrade: number;
+  secondGrade: number;
+  status: SubjectStatus;
   subject: string;
-  teacher: string;
 };
 
 const student = {
   attendance: 95,
-  classroom: "1º Ano A",
+  classroom: "1A",
   classroomPosition: 3,
   classroomStudents: 32,
   completedTasks: 28,
-  email: "jose.aluno@example.com",
   generalAverage: 8.5,
-  name: "José Aluno Exemplo",
+  name: "Ana Beatriz Rocha",
   registration: "ALUN-1209",
-  schoolYear: "2026",
   totalTasks: 30,
 };
 
-const subjects: SubjectPerformance[] = [
+const gradeEvolution = [
+  { classroom: 7, label: "1º Bim", student: 9 },
+  { classroom: 7.8, label: "2º Bim", student: 10 },
+  { classroom: 7.4, label: "3º Bim", student: 9.5 },
+];
+
+const subjects: SubjectGrade[] = [
   {
-    attendance: 96,
     average: 8.5,
-    firstTerm: 8.2,
-    id: 1,
-    secondTerm: 8.8,
-    status: "Aprovado",
-    subject: "Matemática",
-    teacher: "Maria Aparecida",
-  },
-  {
-    attendance: 98,
-    average: 8.8,
-    firstTerm: 8.6,
-    id: 2,
-    secondTerm: 9,
+    firstGrade: 8,
+    secondGrade: 9,
     status: "Aprovado",
     subject: "Português",
-    teacher: "João Santos",
   },
   {
-    attendance: 92,
-    average: 7.7,
-    firstTerm: 7.4,
-    id: 3,
-    secondTerm: 8,
+    average: 9,
+    firstGrade: 9.5,
+    secondGrade: 8.5,
+    status: "Aprovado",
+    subject: "Matemática",
+  },
+  {
+    average: 7.5,
+    firstGrade: 7.5,
+    secondGrade: 7.5,
+    status: "Aprovado",
+    subject: "História",
+  },
+  {
+    average: 8,
+    firstGrade: 8,
+    secondGrade: 8,
     status: "Aprovado",
     subject: "Geografia",
-    teacher: "Ana Ferreira",
   },
   {
-    attendance: 88,
-    average: 6.7,
-    firstTerm: 6.5,
-    id: 4,
-    secondTerm: 6.9,
-    status: "Atenção",
-    subject: "História",
-    teacher: "Ricardo Lima",
-  },
-  {
-    attendance: 97,
-    average: 9.1,
-    firstTerm: 8.9,
-    id: 5,
-    secondTerm: 9.2,
-    status: "Aprovado",
+    average: 6.5,
+    firstGrade: 6,
+    secondGrade: 7,
+    status: "Recuperação",
     subject: "Ciências",
-    teacher: "Helena Souza",
   },
-];
-
-const evolution = [
-  { grade: 7.2, period: "Fev" },
-  { grade: 7.8, period: "Mar" },
-  { grade: 8.1, period: "Abr" },
-  { grade: 7.9, period: "Mai" },
-  { grade: 8.4, period: "Jun" },
-  { grade: 8.5, period: "Jul" },
-];
-
-const skills = [
-  { name: "Raciocínio lógico", value: 88 },
-  { name: "Comunicação", value: 82 },
-  { name: "Criatividade", value: 76 },
-  { name: "Colaboração", value: 91 },
-  { name: "Organização", value: 84 },
 ];
 
 const observations = [
   {
-    author: "Maria Aparecida",
-    date: "18/07/2026",
+    author: "Prof. Marcos (Matemática)",
+    date: "12 Out, 2023",
     id: 1,
-    role: "Professora de Matemática",
-    text: "O aluno demonstrou ótima evolução na resolução de problemas e maior participação nas atividades em grupo.",
-    type: "positive",
+    text: "Ana demonstra excelente raciocínio lógico e auxilia os colegas durante as atividades em grupo. Teve um ótimo desempenho no teste de álgebra.",
   },
   {
-    author: "Ricardo Lima",
-    date: "15/07/2026",
+    author: "Orientação Educacional",
+    date: "05 Out, 2023",
     id: 2,
-    role: "Professor de História",
-    text: "Recomenda-se reforçar a leitura dos conteúdos e a organização das respostas discursivas.",
-    type: "attention",
+    text: "Participou da reunião de liderança estudantil com propostas relevantes para a melhoria do refeitório escolar.",
+  },
+  {
+    author: "Prof. Helena (Ciências)",
+    date: "28 Set, 2023",
+    id: 3,
+    text: "Houve uma leve queda na nota da N1 devido à falta de entrega de um relatório de laboratório. Recomendado foco na organização de prazos.",
+  },
+  {
+    author: "Prof. Cláudia (Português)",
+    date: "18 Set, 2023",
+    id: 4,
+    text: "Apresentou boa evolução na produção textual e maior atenção à estrutura dos argumentos.",
   },
 ];
 
-function KpiCard({
+function MetricCard({
+  detail,
   footer,
-  icon,
   progress,
+  progressColor = "bg-[#0f4c81]",
   title,
   value,
 }: {
-  footer: ReactNode;
-  icon: ReactNode;
-  progress: number;
+  detail?: ReactNode;
+  footer?: ReactNode;
+  progress?: number;
+  progressColor?: string;
   title: string;
   value: string;
 }) {
   return (
-    <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-bold uppercase text-slate-500">{title}</p>
-        <div className="rounded-lg bg-blue-50 p-2 text-[#0f4c81]">{icon}</div>
+    <article className="min-h-36 rounded-lg border border-slate-200 bg-white p-5 transition-shadow hover:shadow-md">
+      <p className="text-xs font-semibold uppercase text-slate-500">{title}</p>
+      <div className="mt-2 flex min-h-10 items-baseline gap-2">
+        <strong className="text-3xl font-bold text-[#00355f]">{value}</strong>
+        {detail}
       </div>
-      <p className="mt-3 text-3xl font-bold text-[#00355f]">{value}</p>
-      <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100">
-        <div
-          className="h-full rounded-full bg-[#0f4c81]"
-          style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
-        />
-      </div>
-      <div className="mt-3 text-xs text-slate-500">{footer}</div>
+      {typeof progress === "number" ? (
+        <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-100">
+          <div
+            className={`h-full rounded-full ${progressColor}`}
+            style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
+          />
+        </div>
+      ) : null}
+      {footer ? <div className="mt-4 text-xs text-slate-500">{footer}</div> : null}
     </article>
   );
 }
 
+function CompetencyRadar() {
+  return (
+    <div className="mx-auto w-full max-w-80" role="img" aria-label="Radar de competências da aluna">
+      <svg viewBox="0 0 280 250" className="h-auto w-full">
+        <title>Competências da aluna</title>
+        <g fill="none" stroke="#dbe3ec" strokeWidth="1">
+          <circle cx="140" cy="120" r="82" />
+          <circle cx="140" cy="120" r="55" />
+          <circle cx="140" cy="120" r="28" />
+          <line x1="140" y1="38" x2="140" y2="202" />
+          <line x1="58" y1="120" x2="222" y2="120" />
+          <line x1="74" y1="70" x2="206" y2="170" />
+          <line x1="206" y1="70" x2="74" y2="170" />
+        </g>
+        <path
+          d="M140 55 L197 101 L178 166 L101 168 L83 96 Z"
+          fill="rgba(15, 76, 129, 0.16)"
+          stroke="#0f4c81"
+          strokeWidth="2"
+        />
+        {[
+          [140, 55],
+          [197, 101],
+          [178, 166],
+          [101, 168],
+          [83, 96],
+        ].map(([cx, cy]) => (
+          <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="3.5" fill="#00355f" />
+        ))}
+        <g fill="#42474f" fontSize="11" fontWeight="600" textAnchor="middle">
+          <text x="140" y="18">Liderança</text>
+          <text x="238" y="91">Comunicação</text>
+          <text x="211" y="219">Raciocínio</text>
+          <text x="69" y="219">Colaboração</text>
+          <text x="42" y="91">Criatividade</text>
+        </g>
+      </svg>
+    </div>
+  );
+}
+
+function GradeEvolutionChart() {
+  return (
+    <div>
+      <div className="mb-5 flex flex-wrap justify-end gap-4 text-xs text-slate-500">
+        <span className="flex items-center gap-2">
+          <span className="h-3 w-3 rounded-full bg-[#0f4c81]" /> Aluna
+        </span>
+        <span className="flex items-center gap-2">
+          <span className="h-3 w-3 rounded-full bg-slate-300" /> Turma
+        </span>
+      </div>
+      <div className="relative h-64 border-b border-l border-slate-200 pl-8">
+        <div className="pointer-events-none absolute inset-0 flex flex-col justify-between pb-7 pl-8 text-[11px] text-slate-400">
+          {[10, 8, 6, 4, 2, 0].map((grade) => (
+            <div key={grade} className="relative border-t border-dashed border-slate-100">
+              <span className="absolute -left-8 -top-2">{grade}</span>
+            </div>
+          ))}
+        </div>
+        <div className="relative z-10 flex h-full items-end justify-around gap-3 px-2 sm:px-6">
+          {gradeEvolution.map((period) => (
+            <div key={period.label} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end">
+              <div className="flex h-48 items-end justify-center gap-1.5 sm:gap-2">
+                <div
+                  className="w-5 rounded-t bg-[#0f4c81] sm:w-8"
+                  style={{ height: `${period.student * 10}%` }}
+                  title={`Aluna: ${period.student.toFixed(1)}`}
+                />
+                <div
+                  className="w-5 rounded-t bg-slate-300 sm:w-8"
+                  style={{ height: `${period.classroom * 10}%` }}
+                  title={`Turma: ${period.classroom.toFixed(1)}`}
+                />
+              </div>
+              <span className="mt-2 pb-2 text-center text-xs font-semibold text-slate-600">
+                {period.label}
+              </span>
+            </div>
+          ))}
+          <div className="flex h-full min-w-0 flex-1 flex-col items-center justify-end">
+            <div className="flex h-48 items-end">
+              <div className="h-[88%] w-8 rounded-t border-2 border-dashed border-[#0f4c81] bg-blue-100/60 sm:w-12" />
+            </div>
+            <span className="mt-2 pb-2 text-center text-xs font-semibold text-slate-400">
+              Projeção 4º
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function StudentPerformancePage() {
-  function printReport() {
-    window.print();
-  }
+  const [showFullHistory, setShowFullHistory] = useState(false);
+  const visibleObservations = showFullHistory ? observations : observations.slice(0, 3);
 
   return (
     <AppLayout active="alunos">
       <section className="px-4 py-6 sm:px-6 lg:px-8 print:p-0">
-        <div className="mx-auto max-w-7xl space-y-6">
-          <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center print:hidden">
+        <div className="mx-auto max-w-7xl space-y-4">
+          <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end print:hidden">
             <div>
               <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-400">
                 <span>Classes</span>
-                <span>&gt;</span>
+                <span>/</span>
                 <span>Alunos</span>
-                <span>&gt;</span>
-                <span className="text-[#1e3a8a]">Desempenho</span>
+                <span>/</span>
+                <span className="text-[#0f4c81]">Desempenho</span>
               </div>
-              <h1 className="text-3xl font-bold text-[#0f3b63]">
-                Desempenho do aluno
-              </h1>
+              <h1 className="text-3xl font-bold text-[#0f3b63]">Desempenho do aluno</h1>
               <p className="mt-1 text-sm text-slate-500">
-                Registro acadêmico demonstrativo #{student.registration}
+                Visão consolidada do desempenho acadêmico e pedagógico.
               </p>
             </div>
-
-            <div className="flex flex-wrap gap-2">
-              <Link
-                href="/classes"
-                className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 hover:bg-slate-50"
-              >
-                <ArrowLeft size={16} />
-                Voltar
-              </Link>
-              <button
-                type="button"
-                onClick={printReport}
-                className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#0f4c81] px-3 text-sm font-semibold text-white hover:bg-[#00355f]"
-              >
-                <Printer size={16} />
-                Imprimir relatório
-              </button>
-            </div>
+            <Link
+              href="/classes"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+            >
+              <ArrowLeft size={17} />
+              Voltar
+            </Link>
           </header>
 
-          <section className="flex flex-col justify-between gap-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm md:flex-row md:items-center">
+          <section className="flex flex-col justify-between gap-6 rounded-lg border border-slate-200 bg-white p-6 md:flex-row md:items-center">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-              <div className="relative flex h-20 w-20 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-xl font-bold text-[#0f4c81]">
-                JA
-                <span className="absolute -bottom-2 -right-2 rounded-full border-2 border-white bg-emerald-600 px-2 py-0.5 text-[10px] font-bold text-white">
-                  ATIVO
+              <div className="relative flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-xl font-bold text-[#0f4c81] ring-4 ring-blue-50">
+                AB
+                <span className="absolute -bottom-2 -right-2 rounded-full border-2 border-white bg-[#13543b] px-2 py-0.5 text-[10px] font-bold text-white">
+                  ATV
                 </span>
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-[#00355f]">
-                  {student.name}
-                </h2>
+                <h2 className="text-xl font-bold text-[#00355f]">{student.name}</h2>
                 <div className="mt-2 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-500">
                   <span className="flex items-center gap-1.5">
-                    <GraduationCap size={16} /> {student.classroom}
+                    <GraduationCap size={17} /> Turma: {student.classroom}
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <ClipboardCheck size={16} /> {student.registration}
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Mail size={16} /> {student.email}
+                    <Hash size={17} /> Matrícula: #{student.registration}
                   </span>
                 </div>
               </div>
             </div>
-            <a
-              href={`mailto:${student.email}`}
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 text-sm font-semibold text-slate-600 hover:bg-slate-50 print:hidden"
-            >
-              <MessageSquare size={17} />
-              Contatar responsáveis
-            </a>
+            <div className="w-full md:w-auto print:hidden">
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+              >
+                <Printer size={17} />
+                Gerar boletim
+              </button>
+            </div>
           </section>
 
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <KpiCard
+            <MetricCard
               title="Média geral"
               value={student.generalAverage.toFixed(1)}
-              icon={<BarChart3 size={19} />}
-              footer={
-                <span className="flex items-center gap-1 font-semibold text-emerald-700">
-                  <TrendingUp size={15} /> +0.3 no período
+              detail={
+                <span className="flex items-center gap-1 text-xs font-bold text-emerald-700">
+                  <TrendingUp size={15} /> +0.3
                 </span>
               }
               progress={85}
             />
-            <KpiCard
+            <MetricCard
               title="Frequência"
               value={`${student.attendance}%`}
-              icon={<CalendarCheck size={19} />}
-              footer="Meta escolar: 90%"
+              detail={<span className="text-xs text-slate-500">Meta: 90%</span>}
               progress={student.attendance}
+              progressColor="bg-[#13543b]"
             />
-            <KpiCard
+            <MetricCard
               title="Tarefas concluídas"
               value={`${student.completedTasks}/${student.totalTasks}`}
-              icon={<CheckCircle2 size={19} />}
-              footer="2 atividades pendentes"
-              progress={(student.completedTasks / student.totalTasks) * 100}
+              footer="2 pendentes este mês"
             />
-            <KpiCard
+            <MetricCard
               title="Posição na turma"
               value={`${student.classroomPosition}º`}
-              icon={<Award size={19} />}
-              footer={`Entre ${student.classroomStudents} alunos`}
-              progress={91}
+              detail={<span className="text-xs text-slate-500">de {student.classroomStudents} alunos</span>}
+              footer={
+                <span className="flex gap-1" aria-label="Terceira posição da turma">
+                  {[0, 1, 2, 3, 4].map((position) => (
+                    <span
+                      key={position}
+                      className={`h-2 w-2 rounded-full ${position < 3 ? "bg-[#0f4c81]" : "bg-slate-200"}`}
+                    />
+                  ))}
+                </span>
+              }
             />
           </section>
 
-          <section className="grid gap-6 xl:grid-cols-2">
-            <article className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h2 className="text-lg font-bold text-slate-900">Competências</h2>
-              <p className="text-sm text-slate-500">
-                Indicadores acadêmicos e comportamentais.
-              </p>
-              <div className="mt-6 space-y-5">
-                {skills.map((skill) => (
-                  <div key={skill.name}>
-                    <div className="mb-2 flex justify-between text-sm">
-                      <span className="font-medium text-slate-700">
-                        {skill.name}
-                      </span>
-                      <strong className="text-[#0f4c81]">{skill.value}%</strong>
-                    </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                      <div
-                        className="h-full rounded-full bg-emerald-600"
-                        style={{ width: `${skill.value}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
+          <section className="grid gap-4 lg:grid-cols-12">
+            <article className="rounded-lg border border-slate-200 bg-white p-6 lg:col-span-4">
+              <h2 className="text-lg font-semibold text-slate-900">Competências</h2>
+              <p className="mt-1 text-sm text-slate-500">Indicadores acadêmicos e socioemocionais.</p>
+              <div className="mt-6">
+                <CompetencyRadar />
               </div>
             </article>
 
-            <article className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h2 className="text-lg font-bold text-slate-900">
-                    Evolução das notas
-                  </h2>
-                  <p className="text-sm text-slate-500">
-                    Média mensal das avaliações realizadas.
-                  </p>
-                </div>
-                <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
-                  Evolução positiva
-                </span>
-              </div>
-              <div className="mt-6 flex h-64 items-end gap-3 border-b border-l border-slate-200 px-4">
-                {evolution.map((item) => (
-                  <div
-                    key={item.period}
-                    className="flex h-full min-w-0 flex-1 flex-col items-center justify-end"
-                  >
-                    <span className="mb-2 text-xs font-bold text-[#00355f]">
-                      {item.grade.toFixed(1)}
-                    </span>
-                    <div
-                      className="w-full max-w-12 rounded-t bg-[#0f4c81]"
-                      style={{ height: `${item.grade * 9}%` }}
-                    />
-                    <span className="mt-2 pb-2 text-xs text-slate-500">
-                      {item.period}
-                    </span>
-                  </div>
-                ))}
+            <article className="rounded-lg border border-slate-200 bg-white p-6 lg:col-span-8">
+              <h2 className="text-lg font-semibold text-slate-900">Evolução de notas</h2>
+              <p className="mt-1 text-sm text-slate-500">Comparativo com a média da turma.</p>
+              <div className="mt-4">
+                <GradeEvolutionChart />
               </div>
             </article>
-          </section>
 
-          <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-            <div className="border-b border-slate-200 p-5">
-              <h2 className="text-lg font-bold text-slate-900">
-                Notas por disciplina
-              </h2>
-              <p className="text-sm text-slate-500">
-                Resultado consolidado do ano letivo {student.schoolYear}.
-              </p>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[850px] text-left text-sm">
-                <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-                  <tr>
-                    <th className="px-5 py-3">Disciplina</th>
-                    <th className="px-5 py-3">Professor</th>
-                    <th className="px-5 py-3 text-center">1º período</th>
-                    <th className="px-5 py-3 text-center">2º período</th>
-                    <th className="px-5 py-3 text-center">Média</th>
-                    <th className="px-5 py-3 text-center">Frequência</th>
-                    <th className="px-5 py-3 text-center">Situação</th>
-                    <th className="px-5 py-3 text-right">Detalhes</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {subjects.map((subject) => (
-                    <tr key={subject.id} className="border-t border-slate-100">
-                      <td className="px-5 py-4 font-semibold text-slate-900">
-                        {subject.subject}
-                      </td>
-                      <td className="px-5 py-4 text-slate-600">
-                        {subject.teacher}
-                      </td>
-                      <td className="px-5 py-4 text-center text-slate-600">
-                        {subject.firstTerm.toFixed(1)}
-                      </td>
-                      <td className="px-5 py-4 text-center text-slate-600">
-                        {subject.secondTerm.toFixed(1)}
-                      </td>
-                      <td className="px-5 py-4 text-center font-bold text-slate-900">
-                        {subject.average.toFixed(1)}
-                      </td>
-                      <td className="px-5 py-4 text-center text-slate-600">
-                        {subject.attendance}%
-                      </td>
-                      <td className="px-5 py-4 text-center">
-                        <span
-                          className={`rounded-full px-2.5 py-1 text-xs font-bold ${
-                            subject.status === "Aprovado"
-                              ? "bg-emerald-50 text-emerald-700"
-                              : "bg-amber-50 text-amber-700"
+            <article className="overflow-hidden rounded-lg border border-slate-200 bg-white lg:col-span-8">
+              <div className="flex flex-col justify-between gap-2 border-b border-slate-200 bg-slate-50 p-5 sm:flex-row sm:items-center">
+                <h2 className="text-lg font-semibold text-slate-900">Notas por disciplina</h2>
+                <span className="text-xs text-slate-500">Atualizado em 15/10/2023</span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[620px] text-left text-sm">
+                  <thead className="bg-slate-50/60 text-xs uppercase text-slate-500">
+                    <tr>
+                      <th className="px-6 py-4">Disciplina</th>
+                      <th className="px-6 py-4 text-center">N1</th>
+                      <th className="px-6 py-4 text-center">N2</th>
+                      <th className="px-6 py-4 text-center">Média</th>
+                      <th className="px-6 py-4">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {subjects.map((subject) => (
+                      <tr key={subject.subject} className="border-t border-slate-100 even:bg-slate-50/40">
+                        <td className="px-6 py-4 font-semibold text-slate-900">{subject.subject}</td>
+                        <td className="px-6 py-4 text-center text-slate-600">{subject.firstGrade.toFixed(1)}</td>
+                        <td className="px-6 py-4 text-center text-slate-600">{subject.secondGrade.toFixed(1)}</td>
+                        <td
+                          className={`px-6 py-4 text-center font-bold ${
+                            subject.status === "Aprovado" ? "text-[#0f4c81]" : "text-red-700"
                           }`}
                         >
-                          {subject.status}
-                        </span>
-                      </td>
-                      <td className="px-5 py-4 text-right">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            window.alert(
-                              `Detalhamento de ${subject.subject} disponível apenas na demonstração.`,
-                            )
-                          }
-                          className="inline-flex items-center gap-1 text-xs font-bold text-[#0f4c81]"
-                        >
-                          Visualizar <ChevronRight size={14} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
+                          {subject.average.toFixed(1)}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`rounded-full px-2.5 py-1 text-xs font-bold ${
+                              subject.status === "Aprovado"
+                                ? "bg-emerald-50 text-emerald-700"
+                                : "bg-red-50 text-red-700"
+                            }`}
+                          >
+                            {subject.status === "Aprovado" ? <CheckCircle2 className="mr-1 inline" size={13} /> : null}
+                            {subject.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </article>
 
-          <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-slate-900">
-              Observações pedagógicas
-            </h2>
-            <p className="text-sm text-slate-500">
-              Registros adicionados pelos professores.
-            </p>
-            <div className="mt-5 space-y-4">
-              {observations.map((observation) => (
-                <article
-                  key={observation.id}
-                  className={`border-l-4 p-4 ${
-                    observation.type === "positive"
-                      ? "border-l-emerald-600 bg-emerald-50/60"
-                      : "border-l-amber-500 bg-amber-50/60"
-                  }`}
-                >
-                  <div className="flex flex-col justify-between gap-2 sm:flex-row">
-                    <div>
-                      <p className="font-bold text-slate-900">
-                        {observation.author}
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        {observation.role}
-                      </p>
-                    </div>
-                    <span className="text-xs font-medium text-slate-500">
-                      {observation.date}
-                    </span>
+            <article className="rounded-lg border border-slate-200 bg-white p-6 lg:col-span-4">
+              <h2 className="text-lg font-semibold text-slate-900">Observações pedagógicas</h2>
+              <div className="mt-6 space-y-6">
+                {visibleObservations.map((observation, index) => (
+                  <div
+                    key={observation.id}
+                    className={`border-l-2 pl-4 ${index % 2 === 0 ? "border-[#0f4c81]" : "border-slate-300"}`}
+                  >
+                    <p className="text-xs font-bold text-slate-500">
+                      {observation.date} · {observation.author}
+                    </p>
+                    <p className="mt-1 text-sm leading-6 text-slate-700">{observation.text}</p>
                   </div>
-                  <p className="mt-3 text-sm leading-6 text-slate-700">
-                    {observation.text}
-                  </p>
-                </article>
-              ))}
-            </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowFullHistory((current) => !current)}
+                className="mt-8 h-10 w-full rounded border border-[#0f4c81] px-4 text-sm font-semibold text-[#0f4c81] hover:bg-[#0f4c81] hover:text-white print:hidden"
+              >
+                {showFullHistory ? "Ocultar histórico" : "Ver histórico completo"}
+              </button>
+            </article>
           </section>
         </div>
       </section>

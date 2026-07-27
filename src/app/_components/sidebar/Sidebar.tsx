@@ -103,7 +103,7 @@ const navItems: Array<{
     icon: BarChart3,
     key: "alunos",
     label: "Desempenho",
-    roles: PROFESSOR_AND_ADMIN_ROLES,
+    roles: ALL_ROLES,
   },
   {
     href: "/notas",

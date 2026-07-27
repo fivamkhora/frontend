@@ -70,7 +70,7 @@ O menu lateral adapta as opcoes ao `role` retornado pela autenticacao:
 
 - `Administrador`: secretaria, turmas, confeccao, provas, atribuicao de provas, avaliacoes e desempenho.
 - `Professor`: turmas, confeccao, provas, atribuicao de provas, avaliacoes e desempenho.
-- `Aluno`: avaliacoes e minhas notas.
+- `Aluno`: avaliacoes, desempenho e minhas notas.
 
 O dashboard possui uma apresentacao especifica para cada perfil. A protecao de acesso nao depende apenas do menu: as rotas privadas exigem uma sessao valida no middleware.
 
