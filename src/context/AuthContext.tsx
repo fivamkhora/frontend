@@ -5,8 +5,10 @@ import {
   useContext,
   useEffect,
   useState,
+  useCallback,
   type ReactNode,
 } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import {
   fetchAuthenticatedUser,
   type AuthenticatedUser,
@@ -22,6 +24,8 @@ type AuthContextType = {
   user: ExtendedUser | null;
   isLoading: boolean;
   hasRole: (allowedRoles: UserRole[]) => boolean;
+  refreshUser: () => Promise<void>;
+  logout: () => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,25 +37,32 @@ export function AuthProvider({
   children: ReactNode;
   initialUser?: ExtendedUser | null;
 }) {
+  const router = useRouter();
+  const pathname = usePathname();
+
   const [user, setUser] = useState<ExtendedUser | null>(initialUser ?? null);
-  const [isLoading, setIsLoading] = useState<boolean>(
-    initialUser === undefined,
-  );
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  const refreshUser = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const authenticatedUser = await fetchAuthenticatedUser();
+      setUser((authenticatedUser as ExtendedUser) || null);
+    } catch {
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    if (initialUser !== undefined) {
-      setUser(initialUser);
-      setIsLoading(false);
-      return;
-    }
-
     let mounted = true;
 
     async function loadUser() {
       try {
         const authenticatedUser = await fetchAuthenticatedUser();
         if (mounted) {
-          setUser(authenticatedUser as ExtendedUser);
+          setUser((authenticatedUser as ExtendedUser) || null);
         }
       } catch {
         if (mounted) {
@@ -69,7 +80,20 @@ export function AuthProvider({
     return () => {
       mounted = false;
     };
-  }, [initialUser]);
+  }, [pathname]);
+
+  const logout = useCallback(async () => {
+    setUser(null);
+    setIsLoading(true);
+
+    try {
+      await fetch("/api/auth/logout", { method: "POST" }).catch(() => null);
+    } finally {
+      router.refresh();
+      router.push("/login");
+      setIsLoading(false);
+    }
+  }, [router]);
 
   const hasRole = (allowedRoles: UserRole[]) => {
     if (!user) return false;
@@ -77,7 +101,9 @@ export function AuthProvider({
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, hasRole }}>
+    <AuthContext.Provider
+      value={{ user, isLoading, hasRole, refreshUser, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );

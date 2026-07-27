@@ -4,43 +4,43 @@ import { useRouter } from "next/navigation";
 import {
   GraduationCap,
   type LucideIcon,
-  Users,
   FilePlus2,
   Files,
   Home,
   Brain,
   BarChart3,
   ClipboardCheck,
+  NotebookPen,
+  Users,
+  Award,
 } from "lucide-react";
 
-import { logout } from "@/services/authService";
 import { CustomNavLink } from "./components/CustomNavLink";
 import SidebarFooter from "./components/SidebarFooter";
 import { useAuth, UserRole } from "@/context/AuthContext";
 
 type AppLayoutActiveItem =
   | "home"
+  | "secretaria"
   | "alunos"
   | "classes"
-  | "secretaria"
   | "confeccao"
   | "atribuirprova"
-  | "provas";
+  | "provas"
+  | "avaliacoes"
+  | "notas";
 
 type SidebarProps = {
   active: AppLayoutActiveItem;
 };
 
-const ALL_ROLES: readonly UserRole[] = [
-  "Administrador",
-  "Professor",
-  "Aluno",
-];
-const ACADEMIC_MANAGEMENT_ROLES: readonly UserRole[] = [
+const ALL_ROLES: readonly UserRole[] = ["Administrador", "Professor", "Aluno"];
+const PROFESSOR_AND_ADMIN_ROLES: readonly UserRole[] = [
   "Administrador",
   "Professor",
 ];
 const ADMIN_ONLY_ROLES: readonly UserRole[] = ["Administrador"];
+const STUDENT_ONLY_ROLES: readonly UserRole[] = ["Aluno"];
 
 const navItems: Array<{
   href: string;
@@ -57,20 +57,6 @@ const navItems: Array<{
     roles: ALL_ROLES,
   },
   {
-    href: "/classes",
-    icon: GraduationCap,
-    key: "classes",
-    label: "Classes",
-    roles: ACADEMIC_MANAGEMENT_ROLES,
-  },
-  {
-    href: "/alunos/mock/desempenho",
-    icon: BarChart3,
-    key: "alunos",
-    label: "Desempenho",
-    roles: ALL_ROLES,
-  },
-  {
     href: "/secretaria",
     icon: Users,
     key: "secretaria",
@@ -78,35 +64,66 @@ const navItems: Array<{
     roles: ADMIN_ONLY_ROLES,
   },
   {
+    href: "/classes",
+    icon: GraduationCap,
+    key: "classes",
+    label: "Classes",
+    roles: PROFESSOR_AND_ADMIN_ROLES,
+  },
+  {
     href: "/confeccao",
     icon: FilePlus2,
     key: "confeccao",
     label: "Confeccionar provas",
-    roles: ACADEMIC_MANAGEMENT_ROLES,
+    roles: PROFESSOR_AND_ADMIN_ROLES,
   },
   {
     href: "/provas",
     icon: Files,
     key: "provas",
     label: "Lista de provas",
-    roles: ACADEMIC_MANAGEMENT_ROLES,
+    roles: PROFESSOR_AND_ADMIN_ROLES,
+  },
+  {
+    href: "/avaliacoes",
+    icon: NotebookPen,
+    key: "avaliacoes",
+    label: "Avaliações",
+    roles: ALL_ROLES,
   },
   {
     href: "/atribuirprova",
     icon: ClipboardCheck,
     key: "atribuirprova",
     label: "Atribuir provas",
-    roles: ACADEMIC_MANAGEMENT_ROLES,
+    roles: PROFESSOR_AND_ADMIN_ROLES,
+  },
+  {
+    href: "/alunos/mock/desempenho",
+    icon: BarChart3,
+    key: "alunos",
+    label: "Desempenho",
+    roles: PROFESSOR_AND_ADMIN_ROLES,
+  },
+  {
+    href: "notas",
+    icon: Award,
+    key: "notas",
+    label: "Minhas Notas",
+    roles: STUDENT_ONLY_ROLES,
   },
 ];
 
 export default function Sidebar({ active }: SidebarProps) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   const handleLogout = async () => {
-    await logout();
-    router.push("/login");
+    if (logout) {
+      await logout();
+    } else {
+      router.push("/login");
+    }
   };
 
   const filteredNavItems = navItems.filter(
@@ -122,7 +139,7 @@ export default function Sidebar({ active }: SidebarProps) {
         </h1>
       </div>
 
-      <nav className="flex flex-1 flex-col p-3 gap-3 mt-5">
+      <nav className="flex flex-1 flex-col p-3 gap-1 mt-5 overflow-y-auto">
         {filteredNavItems.map((item) => {
           const Icon = item.icon;
 
@@ -139,7 +156,7 @@ export default function Sidebar({ active }: SidebarProps) {
         })}
       </nav>
 
-      <div className="p-3">
+      <div className="p-3 border-t border-slate-100">
         <SidebarFooter onLogout={handleLogout} />
       </div>
     </aside>

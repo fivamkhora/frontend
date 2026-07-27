@@ -13,6 +13,14 @@ import {
   Search,
   Sigma,
   Sparkles,
+  Atom,
+  Dna,
+  Globe2,
+  BookOpenCheck,
+  Palette,
+  Activity,
+  Compass,
+  Lightbulb,
 } from "lucide-react";
 import { AppLayout } from "@/app/_components/AppLayout";
 
@@ -44,15 +52,53 @@ export type AssessmentItem = {
   gradeLevel: string;
   createdAt: string;
   createdAtDate: Date | null;
-  icon: "science" | "math" | "history" | "portuguese" | "default";
-  tagColor: "green" | "blue" | "purple" | "cyan" | "slate";
+  icon:
+    | "science"
+    | "math"
+    | "physics"
+    | "chemistry"
+    | "biology"
+    | "history"
+    | "geography"
+    | "philosophy"
+    | "sociology"
+    | "portuguese"
+    | "literature"
+    | "english"
+    | "spanish"
+    | "arts"
+    | "physicalEducation"
+    | "default";
+  tagColor:
+    | "green"
+    | "blue"
+    | "purple"
+    | "cyan"
+    | "amber"
+    | "rose"
+    | "emerald"
+    | "indigo"
+    | "orange"
+    | "pink"
+    | "red"
+    | "teal"
+    | "slate";
 };
 
+// 🎯 Cores personalizadas para cada matéria
 export const tagStyles = {
   green: "bg-emerald-50 text-emerald-700 border-emerald-200",
   blue: "bg-blue-50 text-blue-700 border-blue-200",
   purple: "bg-violet-50 text-violet-700 border-violet-200",
   cyan: "bg-cyan-50 text-cyan-700 border-cyan-200",
+  amber: "bg-amber-50 text-amber-700 border-amber-200",
+  rose: "bg-rose-50 text-rose-700 border-rose-200",
+  emerald: "bg-emerald-100 text-emerald-800 border-emerald-300",
+  indigo: "bg-indigo-50 text-indigo-700 border-indigo-200",
+  orange: "bg-orange-50 text-orange-700 border-orange-200",
+  pink: "bg-pink-50 text-pink-700 border-pink-200",
+  red: "bg-red-50 text-red-700 border-red-200",
+  teal: "bg-teal-50 text-teal-700 border-teal-200",
   slate: "bg-slate-50 text-slate-700 border-slate-200",
 };
 
@@ -64,21 +110,14 @@ export function normalizeText(value: string) {
 }
 
 export function parseDate(value?: string) {
-  if (!value) {
-    return null;
-  }
-
+  if (!value) return null;
   const date = new Date(value);
-
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
 export function formatDate(value?: string) {
   const date = parseDate(value);
-
-  if (!date) {
-    return "Data não informada";
-  }
+  if (!date) return "Data não informada";
 
   return `Criado em ${date.toLocaleDateString("pt-BR", {
     day: "2-digit",
@@ -87,17 +126,34 @@ export function formatDate(value?: string) {
   })}`;
 }
 
+// 🎯 Identificador expandido de disciplinas (Ensino Fundamental e Médio)
 export function getSubjectPresentation(subject: string): {
   icon: AssessmentItem["icon"];
   tagColor: AssessmentItem["tagColor"];
 } {
   const normalized = normalizeText(subject);
 
+  if (normalized.includes("fisica")) {
+    return { icon: "physics", tagColor: "indigo" };
+  }
+
+  if (normalized.includes("quimica")) {
+    return { icon: "chemistry", tagColor: "amber" };
+  }
+
+  if (normalized.includes("biologia")) {
+    return { icon: "biology", tagColor: "emerald" };
+  }
+
   if (normalized.includes("ciencia")) {
     return { icon: "science", tagColor: "green" };
   }
 
-  if (normalized.includes("matematica")) {
+  if (
+    normalized.includes("matematica") ||
+    normalized.includes("algebr") ||
+    normalized.includes("geometr")
+  ) {
     return { icon: "math", tagColor: "blue" };
   }
 
@@ -105,8 +161,47 @@ export function getSubjectPresentation(subject: string): {
     return { icon: "history", tagColor: "purple" };
   }
 
-  if (normalized.includes("portugues")) {
+  if (normalized.includes("geografia")) {
+    return { icon: "geography", tagColor: "teal" };
+  }
+
+  if (normalized.includes("filosofia")) {
+    return { icon: "philosophy", tagColor: "orange" };
+  }
+
+  if (normalized.includes("sociologia")) {
+    return { icon: "sociology", tagColor: "rose" };
+  }
+
+  if (normalized.includes("literatura")) {
+    return { icon: "literature", tagColor: "pink" };
+  }
+
+  if (
+    normalized.includes("portugues") ||
+    normalized.includes("gramatica") ||
+    normalized.includes("redacao")
+  ) {
     return { icon: "portuguese", tagColor: "cyan" };
+  }
+
+  if (normalized.includes("ingles") || normalized.includes("english")) {
+    return { icon: "english", tagColor: "red" };
+  }
+
+  if (normalized.includes("espanhol") || normalized.includes("spanish")) {
+    return { icon: "spanish", tagColor: "amber" };
+  }
+
+  if (normalized.includes("arte")) {
+    return { icon: "arts", tagColor: "pink" };
+  }
+
+  if (
+    normalized.includes("educacao fisica") ||
+    normalized.includes("ed. fisica")
+  ) {
+    return { icon: "physicalEducation", tagColor: "emerald" };
   }
 
   return { icon: "default", tagColor: "slate" };
@@ -129,26 +224,42 @@ export function toAssessmentItem(assessment: BffAssessment): AssessmentItem {
   };
 }
 
+// 🎯 Mapeamento dinâmico dos Ícones das Matérias
 export function AssessmentIcon({ icon }: { icon: AssessmentItem["icon"] }) {
   const className = "h-6 w-6";
 
-  if (icon === "science") {
-    return <FlaskConical className={className} />;
+  switch (icon) {
+    case "physics":
+      return <Atom className={className} />;
+    case "chemistry":
+      return <FlaskConical className={className} />;
+    case "biology":
+      return <Dna className={className} />;
+    case "science":
+      return <FlaskConical className={className} />;
+    case "math":
+      return <Sigma className={className} />;
+    case "history":
+      return <History className={className} />;
+    case "geography":
+      return <Globe2 className={className} />;
+    case "philosophy":
+      return <Lightbulb className={className} />;
+    case "sociology":
+      return <Compass className={className} />;
+    case "literature":
+      return <BookOpenCheck className={className} />;
+    case "portuguese":
+    case "english":
+    case "spanish":
+      return <Languages className={className} />;
+    case "arts":
+      return <Palette className={className} />;
+    case "physicalEducation":
+      return <Activity className={className} />;
+    default:
+      return <FileText className={className} />;
   }
-
-  if (icon === "math") {
-    return <Sigma className={className} />;
-  }
-
-  if (icon === "history") {
-    return <History className={className} />;
-  }
-
-  if (icon === "portuguese") {
-    return <Languages className={className} />;
-  }
-
-  return <FileText className={className} />;
 }
 
 type ProvasPageContentProps = {
@@ -205,14 +316,12 @@ export function ProvasPageContent({
           );
         }
 
-        if (!active) {
-          return;
-        }
+        if (!active) return;
 
         const payload = data as AssessmentsResponse;
 
         if (!Array.isArray(payload.data)) {
-          throw new Error("Resposta invalida ao carregar as provas.");
+          throw new Error("Resposta inválida ao carregar as provas.");
         }
 
         const items = payload.data.map(toAssessmentItem);
@@ -220,9 +329,7 @@ export function ProvasPageContent({
         setAssessments(items);
         setTotalCount(payload.meta?.count ?? items.length);
       } catch (err) {
-        if (!active) {
-          return;
-        }
+        if (!active) return;
 
         setError(
           err instanceof Error
@@ -248,9 +355,7 @@ export function ProvasPageContent({
   const filteredAssessments = useMemo(() => {
     const term = normalizeText(search.trim());
 
-    if (!term) {
-      return assessments;
-    }
+    if (!term) return assessments;
 
     return assessments.filter((assessment) =>
       normalizeText(
@@ -281,24 +386,22 @@ export function ProvasPageContent({
 
         <header className="mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-[#0f3b63]">
-              {title}
-            </h1>
+            <h1 className="text-3xl font-bold text-[#0f3b63]">{title}</h1>
             <p className="mt-1 max-w-2xl text-sm text-slate-500">
               {description}
             </p>
           </div>
         </header>
 
-        <div className="mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
           <div className="flex flex-col gap-3 sm:flex-row">
-            <label className="flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 sm:w-80">
+            <label className="flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 shadow-xs focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 sm:w-80">
               <Search size={18} className="text-slate-400" />
               <input
                 type="text"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Buscar por título ou matéria..."
+                placeholder="Buscar por título, matéria ou série (ex: 9º Ano, Química)..."
                 className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
               />
             </label>
@@ -306,7 +409,7 @@ export function ProvasPageContent({
         </div>
 
         <section className="mb-6 grid gap-4 md:grid-cols-3">
-          <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
             <div className="flex items-center gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-50 text-[#1e3a8a]">
                 <FileText size={24} />
@@ -322,7 +425,7 @@ export function ProvasPageContent({
             </div>
           </article>
 
-          <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
             <div className="flex items-center gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
                 <Sparkles size={24} />
@@ -338,7 +441,7 @@ export function ProvasPageContent({
             </div>
           </article>
 
-          <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
             <div className="flex items-center gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-violet-50 text-violet-700">
                 <CalendarDays size={24} />
@@ -373,7 +476,7 @@ export function ProvasPageContent({
             {filteredAssessments.map((assessment) => (
               <article
                 key={assessment.id}
-                className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-blue-200 hover:shadow-md sm:flex-row"
+                className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-xs transition hover:border-blue-200 hover:shadow-md sm:flex-row"
               >
                 <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-[#1e3a8a]">
                   <AssessmentIcon icon={assessment.icon} />
@@ -403,14 +506,14 @@ export function ProvasPageContent({
                 {renderAction
                   ? renderAction(assessment)
                   : showEditAction && (
-                    <Link
-                      href={`/confeccao/${assessment.id}`}
-                      className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-[#1e3a8a] transition hover:border-blue-200 hover:bg-blue-50 sm:self-start"
-                    >
-                      <Edit3 size={16} />
-                      Editar
-                    </Link>
-                  )}
+                      <Link
+                        href={`/confeccao/${assessment.id}`}
+                        className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-[#1e3a8a] transition hover:border-blue-200 hover:bg-blue-50 sm:self-start"
+                      >
+                        <Edit3 size={16} />
+                        Editar
+                      </Link>
+                    )}
               </article>
             ))}
 

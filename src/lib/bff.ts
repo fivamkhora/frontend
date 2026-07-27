@@ -11,7 +11,7 @@ type BffRequestOptions = {
   authToken?: string;
   body?: unknown;
   errorMessage: string;
-  method: "DELETE" | "GET" | "POST";
+  method: "DELETE" | "GET" | "POST" | "PUT";
   path: string;
 };
 

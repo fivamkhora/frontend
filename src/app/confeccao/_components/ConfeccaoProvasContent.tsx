@@ -1,14 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   BookOpen,
+  ChevronDown,
   ClipboardList,
   FileText,
   LoaderCircle,
   RotateCcw,
   Sparkles,
+  Check,
+  GraduationCap,
+  Gauge,
+  Layers,
 } from "lucide-react";
 import { AppLayout } from "@/app/_components/AppLayout";
 import { AssessmentPreview } from "./Preview/AssesmentPreview";
@@ -44,7 +49,7 @@ type AssessmentLookupResponse = {
 export type AssessmentData =
   AssessmentResponse["data"]["currentVersion"]["assessment"];
 
-type NormalizedOption = {
+export type NormalizedOption = {
   letter: string;
   text: string;
   selected: boolean;
@@ -64,21 +69,6 @@ export type NormalizedAnswer = {
   answer: string;
   rubric: string;
 };
-
-const assessmentTypes = [
-  { label: "Prova", value: "prova" },
-  { label: "Quiz", value: "quiz" },
-  { label: "Trabalho", value: "trabalho" },
-] as const;
-
-const difficulties = [
-  { label: "Fácil", value: "facil" },
-  { label: "Médio", value: "medio" },
-  { label: "Difícil", value: "dificil" },
-] as const;
-
-const materiaisBase =
-  "O ciclo da água é o movimento contínuo da água em nosso planeta. Ele envolve processos como a evaporação, passagem do estado líquido para o gasoso devido ao calor do Sol, condensação, formação de nuvens, e precipitação, chuva. A água também infiltra no solo, alimentando lençóis freáticos.";
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object"
@@ -135,7 +125,7 @@ export function normalizeAnswer(
       asText(data.correctOption) ||
       asText(data.option) ||
       asText(data.letter) ||
-      "Resposta nao informada.",
+      "Resposta não informada.",
     rubric: asText(data.rubric) || asText(data.explanation),
   };
 }
@@ -232,6 +222,52 @@ export function normalizeAnswers(
   return assessment.answerKey.map(normalizeAnswer);
 }
 
+// ==========================================
+// 3. OPÇÕES E CONFIGURAÇÕES
+// ==========================================
+
+const assessmentTypes = [
+  { label: "Prova", value: "prova", icon: FileText },
+  { label: "Quiz", value: "quiz", icon: Sparkles },
+  { label: "Trabalho", value: "trabalho", icon: ClipboardList },
+] as const;
+
+const difficulties = [
+  { label: "Fácil", value: "facil" },
+  { label: "Médio", value: "medio" },
+  { label: "Difícil", value: "dificil" },
+] as const;
+
+const gradeLevelsGrouped = [
+  {
+    group: "Ensino Fundamental - Anos Iniciais",
+    options: ["1º ano", "2º ano", "3º ano", "4º ano", "5º ano"],
+  },
+  {
+    group: "Ensino Fundamental - Anos Finais",
+    options: ["6º ano", "7º ano", "8º ano", "9º ano"],
+  },
+  {
+    group: "Ensino Médio",
+    options: [
+      "1ª série - Ensino Médio",
+      "2ª série - Ensino Médio",
+      "3ª série - Ensino Médio",
+    ],
+  },
+  {
+    group: "Ensino Superior / Pré-Vestibular",
+    options: ["Pré-Vestibular / ENEM", "Ensino Superior"],
+  },
+];
+
+const materiaisBase =
+  "O ciclo da água é o movimento contínuo da água em nosso planeta. Ele envolve processos como a evaporação, passagem do estado líquido para o gasoso devido ao calor do Sol, condensação, formação de nuvens, e precipitação, chuva. A água também infiltra no solo, alimentando lençóis freáticos.";
+
+// ==========================================
+// 4. COMPONENTE PRINCIPAL
+// ==========================================
+
 export function ConfeccaoProvasContent({
   assessmentIdToEdit,
 }: {
@@ -253,11 +289,28 @@ export function ConfeccaoProvasContent({
   const [resultado, setResultado] = useState<AssessmentResponse | null>(null);
   const [error, setError] = useState("");
 
+  const [isGradeOpen, setIsGradeOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsGradeOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const resumoConfiguracao = useMemo(
     () =>
       `${materia} | ${anoEscolar} | ${tipoAvaliacao} | ${quantidadeQuestoes} questões`,
     [materia, anoEscolar, quantidadeQuestoes, tipoAvaliacao],
   );
+
   const assessmentId = resultado?.data.id;
   const isRevisionMode = Boolean(assessmentId);
 
@@ -313,7 +366,7 @@ export function ConfeccaoProvasContent({
               ? data.error
               : "message" in data
                 ? data.message
-                : "Nao foi possivel carregar a avaliacao.",
+                : "Não foi possível carregar a avaliação.",
           );
         }
 
@@ -323,7 +376,7 @@ export function ConfeccaoProvasContent({
           : payload.data;
 
         if (!assessment) {
-          throw new Error("Avaliacao nao encontrada.");
+          throw new Error("Avaliação não encontrada.");
         }
 
         if (!active) {
@@ -348,7 +401,7 @@ export function ConfeccaoProvasContent({
         setError(
           err instanceof Error
             ? err.message
-            : "Nao foi possivel carregar a avaliacao.",
+            : "Não foi possível carregar a avaliação.",
         );
       } finally {
         if (active) {
@@ -379,10 +432,7 @@ export function ConfeccaoProvasContent({
           },
           body: JSON.stringify(
             isRevisionMode
-              ? {
-                  assessmentId,
-                  adjustmentRequest: instrucoes,
-                }
+              ? { assessmentId, adjustmentRequest: instrucoes }
               : {
                   subject: materia,
                   gradeLevel: anoEscolar,
@@ -396,29 +446,11 @@ export function ConfeccaoProvasContent({
         },
       );
 
-      const data = (await response.json()) as
-        | AssessmentResponse
-        | {
-            error?: string;
-            message?: string;
-            upstreamStatus?: number;
-            upstreamPath?: string;
-          };
+      const data = await response.json();
 
       if (!response.ok) {
-        const upstreamDetail =
-          "upstreamStatus" in data && data.upstreamStatus
-            ? ` BFF respondeu ${data.upstreamStatus}${
-                data.upstreamPath ? ` em ${data.upstreamPath}` : ""
-              }.`
-            : "";
-
         throw new Error(
-          "error" in data
-            ? `${data.error}${upstreamDetail}`
-            : "message" in data
-              ? data.message
-              : "Nao foi possivel gerar a avaliacao.",
+          data?.error || data?.message || "Não foi possível gerar a avaliação.",
         );
       }
 
@@ -428,7 +460,7 @@ export function ConfeccaoProvasContent({
       setError(
         err instanceof Error
           ? err.message
-          : "Nao foi possivel gerar a avaliacao.",
+          : "Não foi possível gerar a avaliação.",
       );
     } finally {
       setLoading(false);
@@ -455,118 +487,185 @@ export function ConfeccaoProvasContent({
           </p>
         </div>
 
-        <div className="grid items-start gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
+        <div className="grid items-start gap-6 lg:grid-cols-[380px_minmax(0,1fr)]">
           {loadingAssessment && (
             <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm font-medium text-blue-900 lg:col-span-2">
               Carregando avaliação para edição...
             </div>
           )}
 
-          <section className="h-fit rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="mb-5 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-[#1e3a8a]">
-                <ClipboardList size={22} />
+          <section className=" h-fit rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
+            <div className="mb-6 flex items-center gap-3 border-b border-slate-100 pb-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-[#1e3a8a]">
+                <ClipboardList size={20} />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-slate-950">
+                <h2 className="text-lg font-bold text-slate-900">
                   Configuração Base
                 </h2>
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                <p className="text-xs font-medium text-slate-400">
                   {resumoConfiguracao}
                 </p>
               </div>
             </div>
 
-            <div className="space-y-4">
-              <label className="block">
-                <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
+            <div className="space-y-5">
+              {/* MATÉRIA */}
+              <div>
+                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-500">
                   Matéria
-                </span>
+                </label>
                 <input
                   type="text"
                   value={materia}
-                  onChange={(event) => setMateria(event.target.value)}
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  onChange={(e) => setMateria(e.target.value)}
+                  placeholder="Ex: Ciências, Matemática..."
+                  className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 text-sm font-medium text-slate-800 outline-none transition focus:border-[#0f3b63] focus:bg-white focus:ring-3 focus:ring-blue-100"
                 />
-              </label>
+              </div>
 
-              <label className="block">
-                <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
-                  Ano Escolar
-                </span>
-                <select
-                  value={anoEscolar}
-                  onChange={(event) => setAnoEscolar(event.target.value)}
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              {/* DROPDOWN CUSTOMIZADO DE ANO ESCOLAR */}
+              <div className="relative" ref={dropdownRef}>
+                <label className="mb-1.5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <GraduationCap size={15} className="text-[#0f3b63]" />
+                  Ano / Série Escolar
+                </label>
+
+                <button
+                  type="button"
+                  onClick={() => setIsGradeOpen(!isGradeOpen)}
+                  className="flex h-11 w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 text-sm font-semibold text-slate-800 transition hover:border-slate-300 focus:border-[#0f3b63] focus:bg-white focus:ring-3 focus:ring-blue-100"
                 >
-                  <option>6º ano</option>
-                  <option>7º ano</option>
-                  <option>8º ano</option>
-                  <option>9º ano</option>
-                </select>
-              </label>
+                  <span>{anoEscolar}</span>
+                  <ChevronDown
+                    size={16}
+                    className={`text-slate-400 transition-transform duration-200 ${
+                      isGradeOpen ? "rotate-180 text-[#0f3b63]" : ""
+                    }`}
+                  />
+                </button>
 
-              <label className="block">
-                <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
+                {isGradeOpen && (
+                  <div className="absolute left-0 top-full z-50 mt-2 max-h-72 w-full overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-xl animate-in fade-in-50 zoom-in-95">
+                    {gradeLevelsGrouped.map((group) => (
+                      <div key={group.group} className="mb-2 last:mb-0">
+                        <div className="px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 bg-slate-50 rounded-lg">
+                          {group.group}
+                        </div>
+                        <div className="mt-1 space-y-0.5">
+                          {group.options.map((option) => {
+                            const isSelected = anoEscolar === option;
+                            return (
+                              <button
+                                key={option}
+                                type="button"
+                                onClick={() => {
+                                  setAnoEscolar(option);
+                                  setIsGradeOpen(false);
+                                }}
+                                className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition ${
+                                  isSelected
+                                    ? "bg-blue-50 text-[#0f3b63]"
+                                    : "text-slate-700 hover:bg-slate-50"
+                                }`}
+                              >
+                                <span>{option}</span>
+                                {isSelected && (
+                                  <Check size={14} className="text-[#0f3b63]" />
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* PILLS TIPO DE AVALIAÇÃO */}
+              <div>
+                <label className="mb-1.5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <Layers size={15} className="text-[#0f3b63]" />
                   Tipo de Avaliação
-                </span>
-                <select
-                  value={tipoAvaliacao}
-                  onChange={(event) => setTipoAvaliacao(event.target.value)}
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                >
-                  {assessmentTypes.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {assessmentTypes.map((type) => {
+                    const Icon = type.icon;
+                    const isSelected = tipoAvaliacao === type.value;
+                    return (
+                      <button
+                        key={type.value}
+                        type="button"
+                        onClick={() => setTipoAvaliacao(type.value)}
+                        className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border py-2.5 px-2 text-xs font-bold transition ${
+                          isSelected
+                            ? "border-[#0f3b63] bg-blue-50/80 text-[#0f3b63] shadow-xs"
+                            : "border-slate-200 bg-slate-50/50 text-slate-600 hover:bg-slate-100"
+                        }`}
+                      >
+                        <Icon size={16} />
+                        <span>{type.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <label className="block">
-                  <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
-                    Questões
-                  </span>
+              {/* QUESTÕES E DIFICULDADE */}
+              <div className="grid gap-4">
+                <div>
+                  <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                    Número de Questões
+                  </label>
                   <input
                     type="number"
                     min={1}
                     max={50}
                     value={quantidadeQuestoes}
-                    onChange={(event) =>
-                      setQuantidadeQuestoes(Number(event.target.value))
+                    onChange={(e) =>
+                      setQuantidadeQuestoes(Number(e.target.value))
                     }
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 text-sm font-medium text-slate-800 outline-none transition focus:border-[#0f3b63] focus:bg-white focus:ring-3 focus:ring-blue-100"
                   />
-                </label>
+                </div>
 
-                <label className="block">
-                  <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
+                <div>
+                  <label className="mb-1.5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">
+                    <Gauge size={15} className="text-[#0f3b63]" />
                     Dificuldade
-                  </span>
-                  <select
-                    value={dificuldade}
-                    onChange={(event) => setDificuldade(event.target.value)}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                  >
-                    {difficulties.map((difficulty) => (
-                      <option key={difficulty.value} value={difficulty.value}>
-                        {difficulty.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {difficulties.map((diff) => {
+                      const isSelected = dificuldade === diff.value;
+                      return (
+                        <button
+                          key={diff.value}
+                          type="button"
+                          onClick={() => setDificuldade(diff.value)}
+                          className={`rounded-xl border py-2.5 text-xs font-bold transition ${
+                            isSelected
+                              ? "border-[#0f3b63] bg-[#0f3b63] text-white shadow-xs"
+                              : "border-slate-200 bg-slate-50/50 text-slate-600 hover:bg-slate-100"
+                          }`}
+                        >
+                          {diff.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="mt-6 rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-950">
-              <div className="mb-2 flex items-center gap-2 font-semibold">
-                <Sparkles size={18} />
-                Otimização com IA
+            <div className="mt-6 rounded-2xl border border-blue-100 bg-blue-50/60 p-4 text-xs text-blue-900">
+              <div className="mb-1.5 flex items-center gap-1.5 font-bold text-[#0f3b63]">
+                <Sparkles size={16} />
+                Inteligência Artificial Khora
               </div>
-              <p className="leading-relaxed text-blue-900">
-                Sua avaliação será otimizada com a inteligência artificial da
-                Khora.
+              <p className="leading-relaxed text-slate-600">
+                Sua prova será gerada com alinhamento pedagógico ao ano escolar
+                e dificuldade selecionados.
               </p>
             </div>
 
@@ -575,28 +674,29 @@ export function ConfeccaoProvasContent({
                 type="button"
                 onClick={reiniciarConfeccao}
                 disabled={loading || loadingAssessment}
-                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-[#1e3a8a] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-3 text-xs font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
               >
-                <RotateCcw size={17} />
-                Reiniciar confecção
+                <RotateCcw size={15} />
+                Reiniciar Confecção
               </button>
             )}
           </section>
 
-          <section className="min-w-0 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="mb-5 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
-                <BookOpen size={22} />
+          {/* PAINEL DIREITO: CONTEÚDO E PREVIEW */}
+          <section className="min-w-0 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
+            <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
+                <BookOpen size={20} />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-slate-950">
+                <h2 className="text-lg font-bold text-slate-900">
                   {isRevisionMode
                     ? "Ajustes da Avaliação"
-                    : "Material e Contexto"}
+                    : "Material de Apoio e Contexto"}
                 </h2>
                 {!isRevisionMode && (
-                  <p className="text-sm text-slate-500">
-                    Base de conteúdo usada para gerar a prova.
+                  <p className="text-xs font-medium text-slate-400">
+                    Insira o texto ou resumo da aula que servirá de base.
                   </p>
                 )}
               </div>
@@ -604,70 +704,76 @@ export function ConfeccaoProvasContent({
 
             <div className="space-y-4">
               {!isRevisionMode && (
-                <label className="block">
-                  <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
-                    Material de Aula Conteúdo
-                  </span>
+                <div>
+                  <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                    Material de Aula / Conteúdo
+                  </label>
                   <textarea
-                    rows={8}
+                    rows={6}
                     value={material}
-                    onChange={(event) => setMaterial(event.target.value)}
-                    className="min-h-48 w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm leading-6 text-slate-900 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    onChange={(e) => setMaterial(e.target.value)}
+                    className="w-full min-h-[160px] resize-y rounded-xl border border-slate-200 bg-slate-50/50 p-3.5 text-sm leading-relaxed text-slate-800 outline-none transition focus:border-[#0f3b63] focus:bg-white focus:ring-3 focus:ring-blue-100"
                   />
-                </label>
+                </div>
               )}
 
-              <label className="block">
-                <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
+              <div>
+                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-500">
                   Instruções Adicionais
-                </span>
+                </label>
                 <textarea
                   rows={isRevisionMode ? 6 : 3}
                   value={instrucoes}
-                  onChange={(event) => setInstrucoes(event.target.value)}
+                  onChange={(e) => setInstrucoes(e.target.value)}
                   placeholder={
                     isRevisionMode
-                      ? "Ex.: Troque a questão 2 aberta por uma questão de múltipla escolha."
-                      : "Inclua orientações para a geração da avaliação."
+                      ? "Ex.: Substitua a questão 2 por uma questão sobre evaporação."
+                      : "Ex.: Inclua questões com pegadinhas, foque no processo X..."
                   }
-                  className="min-h-24 w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm leading-6 text-slate-900 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  className="min-h-[90px] w-full resize-y rounded-xl border border-slate-200 bg-slate-50/50 p-3.5 text-sm leading-relaxed text-slate-800 outline-none transition focus:border-[#0f3b63] focus:bg-white focus:ring-3 focus:ring-blue-100"
                 />
-              </label>
+              </div>
+            </div>
 
+            <div className="mt-6 pt-2">
               <button
                 type="button"
                 onClick={gerarAvaliacao}
                 disabled={loading}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#0a2540] px-5 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-[#123a60] disabled:cursor-not-allowed disabled:bg-slate-400 sm:w-auto"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0f3b63] py-3.5 px-6 text-sm font-bold text-white shadow-xs transition hover:bg-[#0a2845] disabled:opacity-50 sm:w-auto"
               >
                 {loading ? (
                   <>
                     <LoaderCircle className="animate-spin" size={18} />
-                    {isRevisionMode
-                      ? "Revisando avaliação..."
-                      : "Gerando avaliação..."}
+                    <span>
+                      {isRevisionMode ? "Revisando..." : "Gerando Avaliação..."}
+                    </span>
                   </>
                 ) : (
                   <>
                     <FileText size={18} />
-                    {isRevisionMode
-                      ? "Gerar Revisão com IA"
-                      : "Gerar Avaliação com IA"}
+                    <span>
+                      {isRevisionMode
+                        ? "Gerar Revisão com IA"
+                        : "Gerar Avaliação com IA"}
+                    </span>
                   </>
                 )}
               </button>
             </div>
 
             {error && (
-              <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700">
+              <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-xs font-semibold text-red-700">
                 {error}
               </div>
             )}
 
             {resultado && (
-              <AssessmentPreview
-                assessment={resultado.data.currentVersion.assessment}
-              />
+              <div className="mt-8 border-t border-slate-100 pt-6">
+                <AssessmentPreview
+                  assessment={resultado.data.currentVersion.assessment}
+                />
+              </div>
             )}
           </section>
         </div>
