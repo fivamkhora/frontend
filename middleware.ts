@@ -3,11 +3,12 @@ import { AUTH_SESSION_COOKIE, verifySessionCookie } from "@/lib/auth/session";
 
 const privatePageRoutes = [
   "/dashboard",
-  "/aluno",
   "/alunos",
+  "/avaliacoes",
   "/classes",
   "/secretaria",
   "/confeccao",
+  "/notas",
   "/provas",
 ];
 
@@ -20,6 +21,7 @@ function isPrivatePage(pathname: string) {
 function isPrivateApi(pathname: string) {
   return (
     pathname.startsWith("/api/classrooms/") ||
+    pathname.startsWith("/api/avaliacao/") ||
     pathname.startsWith("/api/ia/") ||
     pathname.startsWith("/api/secretaria/") ||
     pathname.startsWith("/api/turma/")
@@ -68,13 +70,15 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/dashboard/:path*",
-    "/aluno/:path*",
     "/alunos/:path*",
+    "/avaliacoes/:path*",
     "/classes/:path*",
     "/secretaria/:path*",
     "/confeccao/:path*",
+    "/notas/:path*",
     "/provas/:path*",
     "/api/classrooms/:path*",
+    "/api/avaliacao/:path*",
     "/api/ia/:path*",
     "/api/secretaria/:path*",
     "/api/turma/:path*",

@@ -13,7 +13,6 @@ import {
   NotebookPen,
   Users,
   Award,
-  FileCheck2,
 } from "lucide-react";
 
 import { CustomNavLink } from "./components/CustomNavLink";
@@ -23,7 +22,6 @@ import { useAuth, UserRole } from "@/context/AuthContext";
 type AppLayoutActiveItem =
   | "home"
   | "secretaria"
-  | "provasAluno"
   | "alunos"
   | "classes"
   | "confeccao"
@@ -57,13 +55,6 @@ const navItems: Array<{
     key: "home",
     label: "Home",
     roles: ALL_ROLES,
-  },
-  {
-    href: "/aluno/provas",
-    icon: FileCheck2,
-    key: "provasAluno",
-    label: "Minhas provas",
-    roles: STUDENT_ONLY_ROLES,
   },
   {
     href: "/secretaria",
