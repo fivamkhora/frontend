@@ -284,7 +284,7 @@ export default function MinhasProvasPage() {
       {
         loading: "Iniciando sua prova...",
         success: "Prova iniciada! Redirecionando...",
-        error: (err) =>
+        error: (err: unknown) =>
           err instanceof Error
             ? err.message
             : "Erro ao iniciar a prova. Tente novamente.",

@@ -10,6 +10,15 @@ type AuthenticatedUser = {
   person?: { role?: string };
 };
 
+type ClassroomsEnvelope = {
+  classrooms?: unknown;
+  data?: unknown;
+};
+
+function isClassroomsEnvelope(value: unknown): value is ClassroomsEnvelope {
+  return typeof value === "object" && value !== null;
+}
+
 async function fetchAuthenticatedUser(authToken: string) {
   try {
     const response = await fetch(`${BFF_BASE_URL}/api/v1/auth/user/whoami`, {
@@ -81,18 +90,18 @@ export async function GET(request: Request) {
       return jsonError("Erro ao listar turmas no BFF.", response.status);
     }
 
-    let classroomsList: any[] = [];
+    let classroomsList: unknown[] = [];
 
     if (Array.isArray(data)) {
       classroomsList = data;
-    } else if (Array.isArray(data?.data)) {
+    } else if (isClassroomsEnvelope(data) && Array.isArray(data.data)) {
       classroomsList = data.data;
-    } else if (Array.isArray(data?.classrooms)) {
+    } else if (isClassroomsEnvelope(data) && Array.isArray(data.classrooms)) {
       classroomsList = data.classrooms;
     }
 
     return Response.json(classroomsList);
-  } catch (error) {
+  } catch {
     return jsonError("Erro interno ao buscar turmas no BFF.", 500);
   }
 }

@@ -12,6 +12,29 @@ type RouteContext = {
   params: Promise<{ assessmentId: string }>;
 };
 
+type ImportExamPayload = {
+  availableAt?: unknown;
+  classroomId?: unknown;
+  deadlineAt?: unknown;
+  publishImmediately?: unknown;
+  status?: unknown;
+  timeLimit?: unknown;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function toOptionalIsoDate(value: unknown) {
+  if (typeof value !== "string" || !value.trim()) {
+    return null;
+  }
+
+  const date = new Date(value);
+
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
 async function getAuthenticatedUserId(authToken: string) {
   try {
     const response = await fetch(`${BFF_BASE_URL}/api/v1/auth/user/whoami`, {
@@ -42,7 +65,9 @@ export async function POST(request: Request, { params }: RouteContext) {
   }
 
   const { assessmentId } = await params;
-  const payload = await readJsonPayload(request).catch(() => null);
+  const payload = (await readJsonPayload(request).catch(
+    () => null,
+  )) as ImportExamPayload | null;
 
   const classroomId = payload?.classroomId;
 
@@ -80,17 +105,23 @@ export async function POST(request: Request, { params }: RouteContext) {
   );
 
   const importDataText = await importResponse.text();
-  const importData = parseJsonSafely(importDataText) as any;
-  const examObject = importData?.exam || importData;
+  const parsedImportData = parseJsonSafely(importDataText) as unknown;
+  const importData = isRecord(parsedImportData) ? parsedImportData : null;
+  const nestedExam = importData?.exam;
+  const examObject = isRecord(nestedExam) ? nestedExam : importData;
 
-  if (!importResponse.ok || !examObject?.id) {
+  if (
+    !importResponse.ok ||
+    !examObject ||
+    (typeof examObject.id !== "string" && typeof examObject.id !== "number")
+  ) {
     return Response.json(
       importData || { error: "Erro ao importar a prova na API de Avaliação." },
       { status: importResponse.status || 500 },
     );
   }
 
-  const examId = examObject.id;
+  const examId = String(examObject.id);
 
   if (payload?.status === "PUBLISHED" || payload?.publishImmediately) {
     try {
@@ -103,12 +134,8 @@ export async function POST(request: Request, { params }: RouteContext) {
         },
         body: JSON.stringify({
           status: "PUBLISHED",
-          availableAt: payload?.availableAt
-            ? new Date(payload.availableAt).toISOString()
-            : null,
-          deadlineAt: payload?.deadlineAt
-            ? new Date(payload.deadlineAt).toISOString()
-            : null,
+          availableAt: toOptionalIsoDate(payload?.availableAt),
+          deadlineAt: toOptionalIsoDate(payload?.deadlineAt),
           timeLimit: Number(payload?.timeLimit) || null,
         }),
       });

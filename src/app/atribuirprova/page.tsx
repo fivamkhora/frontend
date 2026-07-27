@@ -64,7 +64,7 @@ export default function AplicarProvaPage() {
         }
 
         setClassrooms(classroomsData || []);
-      } catch (err) {
+      } catch {
         setError("Não foi possível carregar os modelos de avaliação.");
       } finally {
         setLoadingData(false);

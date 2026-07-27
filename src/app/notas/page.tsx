@@ -9,7 +9,6 @@ import {
   FileCheck2,
   LoaderCircle,
   Search,
-  Sparkles,
 } from "lucide-react";
 import { AppLayout } from "@/app/_components/AppLayout";
 import { toast } from "sonner";
@@ -26,13 +25,14 @@ type StudentSubmission = {
   updatedAt?: string;
 };
 
+type SubmissionFilter = "all" | "CORRECTED" | "SUBMITTED";
+
 export default function MinhasNotasPage() {
   const [submissions, setSubmissions] = useState<StudentSubmission[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [filterStatus, setFilterStatus] = useState<
-    "all" | "CORRECTED" | "SUBMITTED"
-  >("all");
+  const [filterStatus, setFilterStatus] =
+    useState<SubmissionFilter>("all");
 
   useEffect(() => {
     let active = true;
@@ -197,7 +197,9 @@ export default function MinhasNotasPage() {
           <div className="flex items-center gap-2">
             <select
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value as any)}
+              onChange={(e) =>
+                setFilterStatus(e.target.value as SubmissionFilter)
+              }
               className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 outline-none transition focus:border-[#0f3b63]"
             >
               <option value="all">Todos os Status</option>

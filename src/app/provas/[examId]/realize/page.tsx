@@ -7,8 +7,6 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  AlertCircle,
-  Send,
   HelpCircle,
 } from "lucide-react";
 import { AppLayout } from "@/app/_components/AppLayout";
@@ -218,7 +216,7 @@ export default function RealizeProvaPage() {
       }
 
       router.push(`/provas/${examId}/resultado?submissionId=${submissionId}`);
-    } catch (err) {
+    } catch {
       alert("Erro ao entregar a prova. Tente novamente.");
     } finally {
       setSubmittingExam(false);

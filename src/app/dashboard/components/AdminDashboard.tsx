@@ -9,7 +9,6 @@ import {
   PlusCircle,
   ArrowRight,
   ShieldCheck,
-  Search,
 } from "lucide-react";
 import { getCurrentDateLabel } from "@/services/date";
 import { useAuth } from "@/context/AuthContext";

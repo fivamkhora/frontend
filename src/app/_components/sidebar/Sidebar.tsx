@@ -13,6 +13,7 @@ import {
   NotebookPen,
   Users,
   Award,
+  FileCheck2,
 } from "lucide-react";
 
 import { CustomNavLink } from "./components/CustomNavLink";
@@ -58,25 +59,11 @@ const navItems: Array<{
     roles: ALL_ROLES,
   },
   {
-    href: "/classes",
-    icon: GraduationCap,
-    key: "classes",
-    label: "Classes",
-    roles: ACADEMIC_MANAGEMENT_ROLES,
-  },
-  {
     href: "/aluno/provas",
     icon: FileCheck2,
     key: "provasAluno",
     label: "Minhas provas",
     roles: STUDENT_ONLY_ROLES,
-  },
-  {
-    href: "/alunos/mock/desempenho",
-    icon: BarChart3,
-    key: "alunos",
-    label: "Desempenho",
-    roles: ALL_ROLES,
   },
   {
     href: "/secretaria",
@@ -128,7 +115,7 @@ const navItems: Array<{
     roles: PROFESSOR_AND_ADMIN_ROLES,
   },
   {
-    href: "notas",
+    href: "/notas",
     icon: Award,
     key: "notas",
     label: "Minhas Notas",
@@ -138,7 +125,7 @@ const navItems: Array<{
 
 export default function Sidebar({ active }: SidebarProps) {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { isLoading, user, logout } = useAuth();
 
   const handleLogout = async () => {
     if (logout) {

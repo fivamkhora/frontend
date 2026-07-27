@@ -5,9 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useRef,
   useState,
-  useCallback,
   type ReactNode,
 } from "react";
 import { useRouter, usePathname } from "next/navigation";

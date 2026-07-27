@@ -21,8 +21,10 @@ type ClassroomItem = {
   classroomCode?: string;
   schoolYear?: string;
   createdAt?: string;
-  members?: any[];
+  members?: unknown[];
 };
+
+type SortOrder = "name" | "oldest" | "recent";
 
 const CARD_THEMES = [
   {
@@ -46,15 +48,13 @@ const CARD_THEMES = [
 ];
 
 export function ClassesPageContent() {
-  const { user, hasRole } = useAuth();
+  const { hasRole } = useAuth();
 
   const isAdmin = hasRole(["Administrador"]);
 
   const [classrooms, setClassrooms] = useState<ClassroomItem[]>([]);
   const [search, setSearch] = useState("");
-  const [sortOrder, setSortOrder] = useState<"recent" | "oldest" | "name">(
-    "recent",
-  );
+  const [sortOrder, setSortOrder] = useState<SortOrder>("recent");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -73,7 +73,7 @@ export function ClassesPageContent() {
 
         const data = await res.json();
         setClassrooms(Array.isArray(data) ? data : []);
-      } catch (err) {
+      } catch {
         setError("Não foi possível carregar a lista de turmas.");
       } finally {
         setLoading(false);
@@ -154,7 +154,7 @@ export function ClassesPageContent() {
           <div className="flex items-center gap-2 self-end sm:self-auto">
             <select
               value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value as any)}
+              onChange={(e) => setSortOrder(e.target.value as SortOrder)}
               className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 outline-none transition focus:border-[#0f3b63]"
             >
               <option value="recent">Ordenar por: Recentes</option>

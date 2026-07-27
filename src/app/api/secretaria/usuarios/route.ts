@@ -27,7 +27,7 @@ export async function GET() {
     }
 
     return Response.json(Array.isArray(data) ? data : []);
-  } catch (error) {
+  } catch {
     return jsonError("Erro interno ao buscar usuários.", 500);
   }
 }

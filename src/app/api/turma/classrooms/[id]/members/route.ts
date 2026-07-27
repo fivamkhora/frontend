@@ -105,7 +105,7 @@ export async function GET(request: Request, { params }: RouteContext) {
     );
 
     return Response.json(membersWithUserData);
-  } catch (error) {
+  } catch {
     return jsonError("Erro ao buscar dados dos membros da turma.", 500);
   }
 }

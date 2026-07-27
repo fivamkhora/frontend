@@ -15,7 +15,8 @@ type AppLayoutActiveItem =
   | "confeccao"
   | "atribuirprova"
   | "provas"
-  | "avaliacoes";
+  | "avaliacoes"
+  | "notas";
 
 type AppLayoutProps = {
   active: AppLayoutActiveItem;
