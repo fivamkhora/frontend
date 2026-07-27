@@ -70,7 +70,10 @@ export async function GET() {
   const user = await fetchAuthenticatedUser(session.token);
 
   if (!user) {
-    return jsonError("Nao foi possivel identificar o usuario autenticado.", 502);
+    return jsonError(
+      "Nao foi possivel identificar o usuario autenticado.",
+      502,
+    );
   }
 
   const response = await fetch(

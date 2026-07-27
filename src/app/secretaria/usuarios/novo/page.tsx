@@ -9,10 +9,12 @@ import {
   Lock,
   Save,
   ShieldCheck,
+  LoaderCircle,
 } from "lucide-react";
 import { AppLayout } from "@/app/_components/AppLayout";
 import { useState } from "react";
 import { createUser } from "@/services/authService";
+import { toast } from "sonner";
 
 type UserRole = "Aluno" | "Professor" | "Admin" | "Secretaria";
 
@@ -31,18 +33,23 @@ export default function NovoUsuarioPage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validação de campos obrigatórios com Toast de aviso
     if (!name || !cpf || !email || !dataNasc || !username || !senha) {
-      alert("Por favor, preencha todos os campos obrigatórios.");
+      toast.warning("Por favor, preencha todos os campos obrigatórios.");
       return;
     }
 
+    // Validação de divergência de senhas
     if (senha !== confirmarSenha) {
-      alert("As senhas não coincidem!");
+      toast.error("As senhas informadas não coincidem.");
       return;
     }
+
+    const toastId = toast.loading("Cadastrando novo usuário...");
 
     try {
       setIsLoading(true);
+
       await createUser({
         name,
         cpf,
@@ -53,8 +60,9 @@ export default function NovoUsuarioPage() {
         password: senha,
       });
 
-      alert("Usuário criado com sucesso!");
+      toast.success("Usuário criado com sucesso!", { id: toastId });
 
+      // Limpa os campos do formulário após sucesso
       setName("");
       setCpf("");
       setEmail("");
@@ -65,7 +73,12 @@ export default function NovoUsuarioPage() {
       setConfirmarSenha("");
     } catch (error) {
       console.error(error);
-      alert("Ocorreu um erro ao salvar o usuário.");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Ocorreu um erro ao salvar o usuário.",
+        { id: toastId },
+      );
     } finally {
       setIsLoading(false);
     }
@@ -75,12 +88,12 @@ export default function NovoUsuarioPage() {
     <AppLayout active="secretaria">
       <form onSubmit={handleSave} className="p-8">
         <div className="mb-2 text-xs font-medium text-slate-400">
-          Usuarios &gt; Adicionar Novo
+          Usuários &gt; Adicionar Novo
         </div>
 
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-[#003b5c]">
-            Adicionar Novo Usuario
+            Adicionar Novo Usuário
           </h1>
           <p className="mt-1 text-sm text-slate-500">
             Preencha os campos abaixo para criar um novo registro no sistema
@@ -90,7 +103,7 @@ export default function NovoUsuarioPage() {
 
         <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
           <div className="space-y-6">
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs">
               <div className="mb-5 flex items-center gap-3">
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-[#003b5c]">
                   <IdCard size={18} />
@@ -160,15 +173,15 @@ export default function NovoUsuarioPage() {
 
             <div className="rounded-xl border border-green-200 bg-green-50 p-4">
               <div className="flex gap-3">
-                <Info className="mt-0.5 text-green-700" size={18} />
+                <Info className="mt-0.5 text-green-700 shrink-0" size={18} />
 
                 <div>
                   <h3 className="text-sm font-bold text-green-800">
                     Importante
                   </h3>
                   <p className="mt-1 text-sm text-green-700">
-                    As informacoes de cargo determinam quais permissoes e
-                    modulos o usuario podera acessar apos o login inicial.
+                    As informações de cargo determinam quais permissões e
+                    módulos o usuário poderá acessar após o login inicial.
                   </p>
                 </div>
               </div>
@@ -176,7 +189,7 @@ export default function NovoUsuarioPage() {
           </div>
 
           <aside className="space-y-6">
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs">
               <div className="mb-5 flex items-center gap-3">
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-[#003b5c]">
                   <Lock size={18} />
@@ -190,7 +203,7 @@ export default function NovoUsuarioPage() {
               <div className="space-y-4">
                 <div>
                   <label className="mb-1 block text-sm font-semibold text-slate-700">
-                    Nome de Usuario
+                    Nome de Usuário
                   </label>
                   <input
                     type="text"
@@ -253,7 +266,7 @@ export default function NovoUsuarioPage() {
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
               <div className="h-40 bg-linear-to-br from-[#003b5c] to-[#1e90ff]" />
 
               <div className="p-5">
@@ -263,7 +276,7 @@ export default function NovoUsuarioPage() {
                 </div>
 
                 <p className="text-sm text-slate-500">
-                  Gestao segura de identidade e acesso para usuarios do ambiente
+                  Gestão segura de identidade e acesso para usuários do ambiente
                   escolar.
                 </p>
               </div>
@@ -282,8 +295,17 @@ export default function NovoUsuarioPage() {
                 disabled={isLoading}
                 className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#003b5c] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#062f46] disabled:bg-slate-400"
               >
-                <Save size={16} />
-                {isLoading ? "Salvando..." : "Salvar Usuario"}
+                {isLoading ? (
+                  <>
+                    <LoaderCircle size={16} className="animate-spin" />
+                    <span>Salvando...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save size={16} />
+                    <span>Salvar Usuário</span>
+                  </>
+                )}
               </button>
             </div>
           </aside>

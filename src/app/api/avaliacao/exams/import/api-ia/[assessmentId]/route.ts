@@ -3,7 +3,6 @@ import {
   BFF_BASE_URL,
   jsonError,
   parseJsonSafely,
-  proxyBffJson,
   readJsonPayload,
 } from "@/lib/bff";
 
@@ -13,72 +12,110 @@ type RouteContext = {
   params: Promise<{ assessmentId: string }>;
 };
 
-type AssignmentPayload = {
-  classroomId?: unknown;
-};
-
-type AuthenticatedUser = {
-  id?: unknown;
-};
-
 async function getAuthenticatedUserId(authToken: string) {
-  const response = await fetch(`${BFF_BASE_URL}/api/v1/auth/user/whoami`, {
-    headers: {
-      Accept: "application/json",
-      Authorization: `Bearer ${authToken}`,
-    },
-    cache: "no-store",
-  });
-  const responseText = await response.text();
-  const data = parseJsonSafely(responseText) as AuthenticatedUser | null;
+  try {
+    const response = await fetch(`${BFF_BASE_URL}/api/v1/auth/user/whoami`, {
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${authToken}`,
+      },
+      cache: "no-store",
+    });
+    const responseText = await response.text();
+    const data = parseJsonSafely(responseText) as { id?: unknown } | null;
 
-  if (!response.ok || !data) {
+    if (!response.ok || !data?.id) {
+      return null;
+    }
+
+    return String(data.id);
+  } catch {
     return null;
   }
-
-  if (
-    (typeof data.id !== "number" && typeof data.id !== "string") ||
-    String(data.id).trim().length === 0
-  ) {
-    return null;
-  }
-
-  return String(data.id);
 }
 
 export async function POST(request: Request, { params }: RouteContext) {
   const session = await getAuthSession();
 
   if (!session) {
-    return jsonError("Nao autenticado.", 401);
+    return jsonError("Não autenticado.", 401);
   }
 
   const { assessmentId } = await params;
-  const payload = (await readJsonPayload(request)) as AssignmentPayload | null;
+  const payload = await readJsonPayload(request).catch(() => null);
+
+  const classroomId = payload?.classroomId;
 
   if (
-    !assessmentId.trim() ||
-    !payload ||
-    typeof payload.classroomId !== "string" ||
-    !payload.classroomId.trim()
+    !assessmentId?.trim() ||
+    typeof classroomId !== "string" ||
+    !classroomId.trim()
   ) {
-    return jsonError("Dados para atribuicao da prova invalidos.", 400);
+    return jsonError("Identificador da turma ou da prova ausente.", 400);
   }
 
-  const teacherId = await getAuthenticatedUserId(session.token);
+  const authUserId = await getAuthenticatedUserId(session.token);
 
-  if (!teacherId) {
-    return jsonError("Nao foi possivel identificar o professor autenticado.", 502);
+  if (!authUserId) {
+    return jsonError(
+      "Não foi possível identificar o professor autenticado.",
+      502,
+    );
   }
 
-  return proxyBffJson({
-    authToken: session.token,
-    body: {
-      classroomId: payload.classroomId.trim(),
-      teacherId,
+  const importResponse = await fetch(
+    `${BFF_BASE_URL}/api/v1/avaliacao/exams/import/api-ia/${encodeURIComponent(assessmentId)}`,
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.token}`,
+      },
+      body: JSON.stringify({
+        classroomId: classroomId.trim(),
+        teacherId: String(authUserId).trim(),
+      }),
     },
-    errorMessage: "Erro ao criar a prova da turma no BFF.",
-    method: "POST",
-    path: `/api/v1/avaliacao/exams/import/api-ia/${encodeURIComponent(assessmentId)}`,
-  });
+  );
+
+  const importDataText = await importResponse.text();
+  const importData = parseJsonSafely(importDataText) as any;
+  const examObject = importData?.exam || importData;
+
+  if (!importResponse.ok || !examObject?.id) {
+    return Response.json(
+      importData || { error: "Erro ao importar a prova na API de Avaliação." },
+      { status: importResponse.status || 500 },
+    );
+  }
+
+  const examId = examObject.id;
+
+  if (payload?.status === "PUBLISHED" || payload?.publishImmediately) {
+    try {
+      await fetch(`${BFF_BASE_URL}/api/v1/avaliacao/exams/${examId}`, {
+        method: "PUT",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.token}`,
+        },
+        body: JSON.stringify({
+          status: "PUBLISHED",
+          availableAt: payload?.availableAt
+            ? new Date(payload.availableAt).toISOString()
+            : null,
+          deadlineAt: payload?.deadlineAt
+            ? new Date(payload.deadlineAt).toISOString()
+            : null,
+          timeLimit: Number(payload?.timeLimit) || null,
+        }),
+      });
+    } catch (err) {
+      console.warn(`⚠️ [BFF] Erro ao publicar o exame ${examId}:`, err);
+    }
+  }
+
+  return Response.json(examObject, { status: 201 });
 }

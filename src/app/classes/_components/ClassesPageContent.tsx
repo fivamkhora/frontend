@@ -1,237 +1,257 @@
 "use client";
 
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
 import {
-  BookOpen,
-  CalendarDays,
-  ClipboardCheck,
-  Eye,
   Search,
+  Calendar,
+  Eye,
+  LoaderCircle,
+  BookOpen,
+  ShieldCheck,
 } from "lucide-react";
-import {
-  fetchTeacherClassrooms,
-  type Classroom,
-} from "@/services/authService";
 import { AppLayout } from "@/app/_components/AppLayout";
+import { useAuth } from "@/context/AuthContext";
 
-type ClassItem = {
-  code: string;
-  id: string;
-  segment: string;
-  name: string;
-  subject: string;
-  year: string;
-  createdAt: string;
-  color: "blue" | "lightBlue" | "green";
+type ClassroomItem = {
+  id: string | number;
+  name?: string;
+  classroomName?: string;
+  code?: string;
+  classroomCode?: string;
+  schoolYear?: string;
+  createdAt?: string;
+  members?: any[];
 };
 
-function getClassColor(index: number): ClassItem["color"] {
-  const colors: ClassItem["color"][] = ["blue", "lightBlue", "green"];
+const CARD_THEMES = [
+  {
+    bgHeader: "bg-[#064e3b]",
+    textColor: "text-white",
+    badgeBg: "bg-white/20 text-white",
+    codeColor: "text-emerald-200",
+  },
+  {
+    bgHeader: "bg-[#dbeafe]",
+    textColor: "text-[#1e3a8a]",
+    badgeBg: "bg-[#bfdbfe] text-[#1e3a8a]",
+    codeColor: "text-[#3b82f6]",
+  },
+  {
+    bgHeader: "bg-[#0f4c81]",
+    textColor: "text-white",
+    badgeBg: "bg-white/20 text-white",
+    codeColor: "text-blue-200",
+  },
+];
 
-  return colors[index % colors.length] ?? "blue";
-}
+export function ClassesPageContent() {
+  const { user, hasRole } = useAuth();
 
-function toClassItem(classroom: Classroom, index: number): ClassItem {
-  return {
-    code: classroom.code,
-    color: getClassColor(index),
-    id: classroom.id,
-    name: classroom.name,
-    segment: "TURMA",
-    subject: classroom.code,
-    year: classroom.schoolYear,
-    createdAt: classroom.createdAt,
-  };
-}
+  const isAdmin = hasRole(["Administrador"]);
 
-function getCardHeaderClass(color: ClassItem["color"]) {
-  const colors = {
-    blue: "bg-[#0f4c81] text-white",
-    green: "bg-[#064e3b] text-white",
-    lightBlue: "bg-[#dbeafe] text-[#1e3a8a]",
-  };
-
-  return colors[color];
-}
-
-type ClassesPageContentProps = {
-  actionLabel?: string;
-  active?: "atribuirprova" | "classes";
-  breadcrumbLabel?: string;
-  description?: string;
-  detailsBasePath?: string;
-  title?: string;
-};
-
-export function ClassesPageContent({
-  actionLabel = "Ver Alunos",
-  active = "classes",
-  breadcrumbLabel = "Minhas Turmas",
-  description = "Acompanhe suas turmas, alunos e informacoes academicas.",
-  detailsBasePath = "/classes",
-  title = "Minhas Turmas",
-}: ClassesPageContentProps = {}) {
-  const [classes, setClasses] = useState<ClassItem[]>([]);
-  const [loadingClasses, setLoadingClasses] = useState(true);
-  const [error, setError] = useState("");
+  const [classrooms, setClassrooms] = useState<ClassroomItem[]>([]);
   const [search, setSearch] = useState("");
-  const [sortMode, setSortMode] = useState<"name" | "recent">("recent");
+  const [sortOrder, setSortOrder] = useState<"recent" | "oldest" | "name">(
+    "recent",
+  );
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    let active = true;
-
-    async function loadClasses() {
+    async function loadClassrooms() {
       try {
-        const classrooms = await fetchTeacherClassrooms();
+        setLoading(true);
 
-        if (active) {
-          setClasses(classrooms.map(toClassItem));
-        }
-      } catch {
-        if (active) {
-          setError("Nao foi possivel carregar suas turmas.");
-        }
+        const url = isAdmin ? "/api/turma/classrooms" : "/api/turma/classrooms";
+
+        const res = await fetch(url, {
+          headers: { Accept: "application/json" },
+        });
+
+        if (!res.ok) throw new Error("Erro ao carregar turmas");
+
+        const data = await res.json();
+        setClassrooms(Array.isArray(data) ? data : []);
+      } catch (err) {
+        setError("Não foi possível carregar a lista de turmas.");
       } finally {
-        if (active) {
-          setLoadingClasses(false);
-        }
+        setLoading(false);
       }
     }
 
-    loadClasses();
+    loadClassrooms();
+  }, [isAdmin]);
 
-    return () => {
-      active = false;
-    };
-  }, []);
+  const filteredAndSortedClassrooms = useMemo(() => {
+    const term = search.trim().toLowerCase();
 
-  const visibleClasses = useMemo(() => {
-    const term = search.trim().toLocaleLowerCase("pt-BR");
-    const filtered = term
-      ? classes.filter((item) =>
-          [item.name, item.code, item.year].some((value) =>
-            value.toLocaleLowerCase("pt-BR").includes(term),
-          ),
-        )
-      : [...classes];
+    const filtered = classrooms.filter((c) => {
+      const name = (c.name || c.classroomName || "").toLowerCase();
+      const code = (c.code || c.classroomCode || "").toLowerCase();
+      const year = String(c.schoolYear || "").toLowerCase();
+
+      return name.includes(term) || code.includes(term) || year.includes(term);
+    });
 
     return filtered.sort((a, b) => {
-      if (sortMode === "name") {
-        return a.name.localeCompare(b.name, "pt-BR");
+      if (sortOrder === "name") {
+        const nameA = a.name || a.classroomName || "";
+        const nameB = b.name || b.classroomName || "";
+        return nameA.localeCompare(nameB);
       }
-
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      if (sortOrder === "oldest") {
+        return String(a.id).localeCompare(String(b.id));
+      }
+      return String(b.id).localeCompare(String(a.id));
     });
-  }, [classes, search, sortMode]);
-
-  const ActionIcon = active === "atribuirprova" ? ClipboardCheck : Eye;
+  }, [classrooms, search, sortOrder]);
 
   return (
-    <AppLayout active={active}>
-      <section className="px-4 py-6 sm:px-6 lg:px-8">
+    <AppLayout active="classes">
+      <section className="px-8 py-6">
         <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-400">
           <span>Painel</span>
           <span>&gt;</span>
-          <span className="text-[#1e3a8a]">{breadcrumbLabel}</span>
+          <span className="text-[#1e3a8a]">
+            {isAdmin ? "Todas as Turmas" : "Minhas Turmas"}
+          </span>
         </div>
 
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-[#0f3b63]">{title}</h1>
-          <p className="mt-1 text-sm text-slate-500">{description}</p>
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-bold text-[#0f3b63]">
+              {isAdmin ? "Gestão Geral de Turmas" : "Minhas Turmas"}
+            </h1>
+            {isAdmin && (
+              <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700">
+                <ShieldCheck size={14} /> Visão Global (Admin)
+              </span>
+            )}
+          </div>
+          <p className="mt-1 text-sm text-slate-500">
+            {isAdmin
+              ? "Acompanhe todas as turmas cadastradas na instituição, professores e alunos vinculados."
+              : "Acompanhe suas turmas, alunos e informações acadêmicas."}
+          </p>
         </div>
 
-        <div className="mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <label className="relative block">
-                <Search
-                  size={16}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                />
+        <div className="mb-8 flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative flex-1">
+            <Search
+              size={16}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+            />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Pesquisar turmas por nome, código ou ano..."
+              className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-4 text-xs font-medium text-slate-700 outline-none transition focus:border-[#0f3b63] focus:bg-white"
+            />
+          </div>
 
-                <input
-                  type="search"
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Pesquisar turmas"
-                  className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 pl-9 pr-4 text-sm outline-none transition focus:border-[#1e3a8a] focus:bg-white sm:w-80"
-                />
-              </label>
-
-              <select
-                value={sortMode}
-                onChange={(event) =>
-                  setSortMode(event.target.value as "name" | "recent")
-                }
-                aria-label="Ordenar turmas"
-                className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-600 outline-none focus:border-[#1e3a8a]"
-              >
-                <option value="recent">Ordenar por: Recentes</option>
-                <option value="name">Ordenar por: Nome</option>
-              </select>
-            </div>
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value as any)}
+              className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 outline-none transition focus:border-[#0f3b63]"
+            >
+              <option value="recent">Ordenar por: Recentes</option>
+              <option value="oldest">Ordenar por: Antigos</option>
+              <option value="name">Ordenar por: Nome</option>
+            </select>
           </div>
         </div>
 
-        {error && (
-          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700">
+        {loading && (
+          <div className="flex items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white p-12 text-slate-500">
+            <LoaderCircle size={22} className="animate-spin text-[#0f3b63]" />
+            <span className="text-sm font-medium">
+              {isAdmin
+                ? "Carregando todas as turmas..."
+                : "Carregando suas turmas..."}
+            </span>
+          </div>
+        )}
+
+        {error && !loading && (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-5 text-sm font-medium text-red-700">
             {error}
           </div>
         )}
 
-        {loadingClasses && (
-          <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-sm font-medium text-slate-500">
-            Carregando turmas...
-          </div>
-        )}
+        {!loading && !error && (
+          <>
+            {filteredAndSortedClassrooms.length > 0 ? (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {filteredAndSortedClassrooms.map((c, index) => {
+                  const id = c.id;
+                  const name = c.name || c.classroomName || "Turma";
+                  const code = c.code || c.classroomCode || "";
+                  const schoolYear = c.schoolYear || "2026";
 
-        {!loadingClasses && !error && visibleClasses.length > 0 && (
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {visibleClasses.map((item) => (
-              <Link
-                key={item.id}
-                href={`${detailsBasePath}/${encodeURIComponent(item.id)}`}
-                className="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-              >
-                <div className={`p-5 ${getCardHeaderClass(item.color)}`}>
-                  <span className="inline-flex rounded-md bg-white/20 px-2 py-1 text-[10px] font-bold uppercase tracking-wide">
-                    {item.segment}
-                  </span>
+                  const theme = CARD_THEMES[index % CARD_THEMES.length];
 
-                  <h2 className="mt-4 text-2xl font-bold">{item.name}</h2>
+                  return (
+                    <div
+                      key={id}
+                      className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs transition duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                    >
+                      <div
+                        className={`p-6 ${theme.bgHeader} ${theme.textColor}`}
+                      >
+                        <span
+                          className={`inline-block rounded-md px-2.5 py-1 text-[10px] font-black uppercase tracking-wider ${theme.badgeBg}`}
+                        >
+                          TURMA
+                        </span>
 
-                  <p className="mt-1 text-sm opacity-90">{item.subject}</p>
-                </div>
+                        <h2 className="mt-3 text-2xl font-black tracking-tight leading-tight">
+                          {name}
+                        </h2>
 
-                <div className="flex items-center justify-between px-5 py-4">
-                  <div className="flex items-center gap-2 text-xs text-slate-500">
-                    <CalendarDays size={15} />
-                    <span>Ano letivo {item.year}</span>
-                  </div>
+                        {code && (
+                          <p
+                            className={`mt-1 text-xs font-bold ${theme.codeColor}`}
+                          >
+                            {code}
+                          </p>
+                        )}
+                      </div>
 
-                  <span className="inline-flex items-center gap-2 rounded-lg bg-blue-50 px-4 py-2 text-xs font-bold text-[#1e3a8a] transition group-hover:bg-blue-100">
-                    <ActionIcon size={15} />
-                    <span>{actionLabel}</span>
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
+                      <div className="flex items-center justify-between bg-white px-6 py-4 border-t border-slate-100">
+                        <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+                          <Calendar size={15} className="text-slate-400" />
+                          <span>Ano letivo {schoolYear}</span>
+                        </div>
 
-        {!loadingClasses && !error && visibleClasses.length === 0 && (
-          <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center">
-            <BookOpen className="mx-auto mb-3 text-slate-400" size={28} />
-            <h3 className="text-sm font-bold text-slate-700">
-              {search ? "Nenhuma turma encontrada" : "Nenhuma turma vinculada"}
-            </h3>
-            <p className="mt-1 text-sm text-slate-500">
-              {search
-                ? "Nenhuma turma corresponde ao filtro informado."
-                : "Nao encontramos turmas vinculadas ao professor autenticado."}
-            </p>
-          </div>
+                        <Link
+                          href={`/classes/${id}`}
+                          className="flex items-center gap-2 rounded-xl bg-blue-50/80 px-4 py-2 text-xs font-bold text-[#1e3a8a] transition hover:bg-blue-100"
+                        >
+                          <Eye size={15} />
+                          <span>Ver Detalhes</span>
+                        </Link>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
+                <BookOpen className="mx-auto mb-3 text-slate-400" size={32} />
+                <h3 className="text-base font-bold text-slate-700">
+                  Nenhuma turma encontrada
+                </h3>
+                <p className="mt-1 text-xs text-slate-500">
+                  {isAdmin
+                    ? "Não existem turmas cadastradas no sistema."
+                    : "Você não possui nenhuma turma vinculada."}
+                </p>
+              </div>
+            )}
+          </>
         )}
       </section>
     </AppLayout>
